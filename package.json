@@ -1,0 +1,35 @@
+{
+  "name": "com.racer.ezsaver",
+  "displayName": "EzSaver",
+  "version": "1.0.0",
+  "unity": "2020.3",
+  "description": "A Flexible and Secure Saver for Unity Games, Enabling JSON Serialization and Secure File Storage.",
+  "documentationUrl": "https://ebukaracer.github.io/EzSaver",
+  "author": {
+    "name": "Racer",
+    "url": "https://github.com/ebukaracer"
+  },
+  "repository": {
+    "type": "git",
+    "repository": "https://github.com/ebukaracer/EzSaver.git"
+  },
+  "keywords": [
+    "save",
+    "unity-package",
+    "tool",
+    "json",
+    "file",
+    "package"
+  ],
+  "samples": [
+    {
+      "displayName": "Demo",
+      "description": "An example scene containing a demo of the package.",
+      "path": "Samples~/Demo"
+    }
+  ],
+  "category": "Tools",
+  "dependencies": {
+    "com.unity.nuget.newtonsoft-json": "3.2.1"
+  }
+}
