@@ -3,7 +3,7 @@
 
 A Flexible and Secure Saver for Unity Games, Enabling JSON Serialization and Secure File Storage.
 
- [Read Docs](https://github.com/ebukaracer/EzUnityUtils/blob/pkg-EzSaver/DOCS.md)
+ [Read Docs](https://ebukaracer.github.io/EzSaver)
 ## Features
 - Supports encryption/decryption(AES)
 - Custom-type JSON serialization/deserialization
