@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if UNITY_EDITOR
+using System;
 using Racer.EzSaver.Core;
 using Racer.EzSaver.Utilities;
 
@@ -117,3 +118,4 @@ namespace Racer.EzSaver.Editor
         }
     }
 }
+#endif

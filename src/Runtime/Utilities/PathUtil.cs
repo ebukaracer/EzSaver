@@ -12,7 +12,7 @@ namespace Racer.EzSaver.Utilities
     {
         // The root path of this package.
 #if !UNITY_EDITOR
-        private static readonly string RootPath = $"{Application.persistentDataPath}/EzSaver";
+        private static readonly string RootPath = $"{UnityEngine.Application.persistentDataPath}/EzSaver";
 #else
         private static readonly string RootPath = "Assets/EzSaver";
 #endif
