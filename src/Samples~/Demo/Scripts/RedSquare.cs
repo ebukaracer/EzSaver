@@ -24,6 +24,9 @@ namespace Racer.EzSaver.Samples
         private Text _scoreText;
         private Text _highscoreText;
 
+        [SerializeField] protected bool encrypt;
+
+
         private void Awake()
         {
             _button = GetComponent<Button>();
@@ -40,7 +43,7 @@ namespace Racer.EzSaver.Samples
         protected virtual void InitializeEzSaver()
         {
             // One time initialization using the singleton instance
-            EzSaverCore = EzSaverManager.Instance.CreateSaveFile(_saveFileName);
+            EzSaverCore = EzSaverManager.Instance.CreateSaveFile(_saveFileName, encrypt);
         }
 
         private void InitializeHighscore()

@@ -16,8 +16,8 @@ namespace Racer.EzSaver.Utilities
     internal static class KeyGen
     {
         private const int KeySize = 16;
-        private const string ID = "_id";
-        private const string Iv = "_iv";
+        private const string KeyId = "EzSaverKey";
+        private const string KeyIv = "EzSaverIv";
 
         /// <summary>
         /// Generates a random string using a cryptographic random number generator.
@@ -39,7 +39,7 @@ namespace Racer.EzSaver.Utilities
         public static void SetRandomKey(out string rndKey)
         {
             rndKey = GenerateRndStr();
-            PlayerPrefs.SetString(ID, rndKey);
+            PlayerPrefs.SetString(KeyId, rndKey);
         }
 
         /// <summary>
@@ -48,10 +48,10 @@ namespace Racer.EzSaver.Utilities
         /// <returns>The stored key string.</returns>
         public static string GetKeyStr()
         {
-            if (!PlayerPrefs.HasKey(ID))
-                PlayerPrefs.SetString(ID, GenerateRndStr());
+            if (!PlayerPrefs.HasKey(KeyId))
+                PlayerPrefs.SetString(KeyId, GenerateRndStr());
 
-            return PlayerPrefs.GetString(ID);
+            return PlayerPrefs.GetString(KeyId);
         }
 
         /// <summary>
@@ -69,10 +69,10 @@ namespace Racer.EzSaver.Utilities
         /// <returns>The stored IV as a byte array.</returns>
         public static byte[] GetIvBytes()
         {
-            if (!PlayerPrefs.HasKey(Iv))
-                PlayerPrefs.SetString(Iv, GenerateRndStr());
+            if (!PlayerPrefs.HasKey(KeyIv))
+                PlayerPrefs.SetString(KeyIv, GenerateRndStr());
 
-            return Convert.FromBase64String(PlayerPrefs.GetString(Iv));
+            return Convert.FromBase64String(PlayerPrefs.GetString(KeyIv));
         }
 
         /// <summary>
@@ -80,8 +80,8 @@ namespace Racer.EzSaver.Utilities
         /// </summary>
         public static void ClearPrefs()
         {
-            PlayerPrefs.DeleteKey(ID);
-            PlayerPrefs.DeleteKey(Iv);
+            PlayerPrefs.DeleteKey(KeyId);
+            PlayerPrefs.DeleteKey(KeyIv);
         }
     }
 }

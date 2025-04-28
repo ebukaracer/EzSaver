@@ -19,7 +19,7 @@ namespace Racer.EzSaver.Utilities
         /// <summary>
         /// Dictionary to store EzSaverCore instances by filename.
         /// </summary>
-        private Dictionary<string, EzSaverCore> _ezSaverCores = new();
+        private Dictionary<string, EzSaverCore> _ezSaverCoreStore = new();
 
         /// <summary>
         /// Gets the EzSaverCore instance associated with the specified filename.
@@ -28,7 +28,7 @@ namespace Racer.EzSaver.Utilities
         /// <returns>The EzSaverCore instance if found; otherwise, null.</returns>
         public EzSaverCore GetSaveFile(string filename)
         {
-            if (_ezSaverCores.TryGetValue(filename, out var ezSaverCore))
+            if (_ezSaverCoreStore.TryGetValue(filename, out var ezSaverCore))
                 return ezSaverCore;
 
             EzLogger.Error(
@@ -44,8 +44,8 @@ namespace Racer.EzSaver.Utilities
         /// <param name="useSecurity">Indicates whether to use security features.</param>
         public EzSaverCore CreateSaveFile(string filename, bool useSecurity = false)
         {
-            if (!_ezSaverCores.ContainsKey(filename))
-                return _ezSaverCores[filename] = new EzSaverCore(filename, false, useSecurity);
+            if (!_ezSaverCoreStore.ContainsKey(filename))
+                return _ezSaverCoreStore[filename] = new EzSaverCore(filename, false, useSecurity);
 
             EzLogger.Warn(
                 $"The save-file: '{FileHelper.AssignExtension(filename)}', has already been initialized. Use {nameof(GetSaveFile)} to access it instead.");

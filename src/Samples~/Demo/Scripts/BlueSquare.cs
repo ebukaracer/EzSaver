@@ -10,7 +10,7 @@ namespace Racer.EzSaver.Samples
         protected override void InitializeEzSaver()
         {
             // One time initialization, using 'new()'
-            EzSaverCore = new EzSaverCore(gameObject.name + "_Save");
+            EzSaverCore = new EzSaverCore(gameObject.name + "_Save", encrypt);
         }
 
         protected override void OnDestroy()
