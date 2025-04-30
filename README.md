@@ -1,10 +1,9 @@
 # EzSaver 
-
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue)](http://makeapullrequest.com) [![License: MIT](https://img.shields.io/badge/License-MIT-blue)](https://ebukaracer.github.io/ebukaracer/md/LICENSE.html)
 
 A Flexible and Secure Saver for Unity Games, Enabling JSON Serialization and Secure File Storage.
 
- [Read Docs](https://ebukaracer.github.io/EzSaver)
+ [View in DocFx](https://ebukaracer.github.io/EzSaver)
 ## Features
 
 - Supports encryption/decryption(AES)
@@ -83,9 +82,11 @@ _ezSaverCore.DeleteFile();
 
 ## Samples and Best Practices
 
-Check out this package's sample scene by importing it from the package manager *sample's tab* and exploring the scripts for the recommended approach for saving and loading data easily.
+After installation, use the menu option: `Racer > EzSaver > Import Elements` to import the prebuilt elements(prefabs) of this package, which will speed up your workflow. In the case of any updates to newer versions, use the menu option: `Racer > EzSaver > Import Elements(Force)`. 
 
-*To remove this package completely(leaving no trace), navigate to: `Racer > EzSaver > Remove package`*
+Optionally import this package's demo from the package manager's `Samples` tab.
+
+To remove this package completely(leaving no trace), navigate to: `Racer > EzSaver > Remove package`
 
 ## Dependencies
 

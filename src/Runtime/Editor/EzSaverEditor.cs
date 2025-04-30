@@ -1,5 +1,4 @@
 #if UNITY_EDITOR
-using System;
 using System.IO;
 using Racer.EzSaver.Utilities;
 using UnityEditor;
@@ -22,9 +21,11 @@ namespace Racer.EzSaver.Editor
         private const string SamplesPath = "Assets/Samples/EzSaver";
 
         private const string PkgId = "com.racer.ezsaver";
-        private static readonly string SourcePath = $"Packages/{PkgId}/Elements";
-        private const string ElementsPath = RootPath + "/Elements";
+        private const string AssetPkgId = "EzSaver.unitypackage";
+
         private static bool _isElementsImported;
+        private const string ImportElementsContextMenuPath = ContextMenuPath + "Import Elements";
+        private const string ForceImportElementsContextMenuPath = ContextMenuPath + "Import Elements(Force)";
 
         private const int Width = 400;
         private const int Height = Width + 80;
@@ -92,47 +93,34 @@ namespace Racer.EzSaver.Editor
             AssetDatabase.Refresh();
         }
 
-        [MenuItem(ContextMenuPath + "Import Elements", false, priority = 1)]
+        [MenuItem(ImportElementsContextMenuPath, false, priority = 1)]
         private static void ImportElements()
         {
-            if (Directory.Exists(ElementsPath))
-            {
-                Debug.Log(
-                    $"Root directory already exists: '{ElementsPath}'" +
-                    "\nIf you would like to re-import, remove and reinstall this package.");
-                return;
-            }
+            var packagePath = $"Packages/{PkgId}/Elements/{AssetPkgId}";
 
-            if (!Directory.Exists(SourcePath))
-            {
-                Debug.LogError(
-                    "Source path is missing. Please ensure this package is installed correctly," +
-                    $" otherwise reinstall it.\nNonexistent Path: {SourcePath}");
-                return;
-            }
-
-            try
-            {
-                DirUtils.CreateDirectory(RootPath);
-                Directory.Move(SourcePath, ElementsPath);
-                DirUtils.DeleteEmptyMetaFiles(SourcePath);
-                AssetDatabase.Refresh();
-                _isElementsImported = AssetDatabase.IsValidFolder(ElementsPath);
-                Debug.Log($"Imported successfully at '{ElementsPath}'");
-            }
-            catch (Exception e)
-            {
-                Debug.LogError(
-                    $"An error occurred while importing this package's elements: {e.Message}\n{e.StackTrace}");
-            }
+            if (File.Exists(packagePath))
+                AssetDatabase.ImportPackage(packagePath, true);
+            else
+                EditorUtility.DisplayDialog("Missing Package File", $"{AssetPkgId} not found in the package.", "OK");
         }
 
+        [MenuItem(ForceImportElementsContextMenuPath, false, priority = 1)]
+        private static void ForceImportElements()
+        {
+            ImportElements();
+        }
 
         [MenuItem(ContextMenuPath + "Import Elements", true, priority = 1)]
         private static bool ValidateImportElements()
         {
-            _isElementsImported = AssetDatabase.IsValidFolder(ElementsPath);
+            _isElementsImported = AssetDatabase.IsValidFolder($"{RootPath}/Elements");
             return !_isElementsImported;
+        }
+
+        [MenuItem(ForceImportElementsContextMenuPath, true, priority = 1)]
+        private static bool ValidateForceImportElements()
+        {
+            return _isElementsImported;
         }
 
         [MenuItem(ContextMenuPath + "Remove Package(recommended)", priority = 2)]
@@ -400,14 +388,7 @@ namespace Racer.EzSaver.Editor
                 Directory.CreateDirectory(path);
         }
 
-        public static void MoveMetaFile(string source, string destination)
-        {
-            if (!File.Exists(source + ".meta")) return;
-
-            File.Move(source + ".meta", destination + ".meta");
-        }
-
-        public static void DeleteEmptyMetaFiles(string directory)
+        private static void DeleteEmptyMetaFiles(string directory)
         {
             if (Directory.Exists(directory)) return;
 
