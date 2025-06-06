@@ -1,4 +1,5 @@
 using Racer.EzSaver.Utilities;
+using UnityEngine;
 
 namespace Racer.EzSaver.Core
 {
@@ -19,15 +20,12 @@ namespace Racer.EzSaver.Core
         }
 
         /// <summary>
-        /// Loads the content of the file as a string.
+        /// Loads the string contents of the file. A new file will be initialized assuming the previous one was not found.
         /// </summary>
         /// <returns>The content of the file as a string.</returns>
         public string LoadString()
         {
-            if (FileHelper.CreateString(_root))
-                EzLogger.Warn(
-                    $"No existing {FileHelper.AssignExtension(_root)} was found, a new one was initialized.");
-
+            FileHelper.CreateString(_root);
             return FileHelper.LoadString(_root);
         }
 
@@ -38,7 +36,7 @@ namespace Racer.EzSaver.Core
         public void SaveString(string content)
         {
             if (!FileHelper.SaveString(_root, content))
-                EzLogger.Warn(
+                Debug.LogError(
                     $"Failed to save content to '{FileHelper.AssignExtension(_root)}'.\nThe file was not found or properly initialized.");
         }
 

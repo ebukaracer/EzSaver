@@ -1,5 +1,6 @@
 using Racer.EzSaver.Core;
 using Racer.EzSaver.Utilities;
+using UnityEngine;
 
 namespace Racer.EzSaver.Samples
 {
@@ -9,12 +10,17 @@ namespace Racer.EzSaver.Samples
     /// Ensure <see cref="EzSaverManager"/> prefab or a gameobject containing it, is present in the scene.
     /// </remarks>
     /// </summary>
-    internal class BlueSquare : RedSquare
+    internal class YellowSquare : BlueSquare
     {
+        // JSON string-literal to be used.
+        private string _contentSrc = @"{""Highscore"": 1}";
+
         protected override void InitializeEzSaver()
         {
-            // Initialized to a file with extension
-            EzSaverCore = EzSaverManager.Instance.GetSave(gameObject.name + "_Save.ini", useSecurity: encrypt);
+            _contentSrc = PlayerPrefs.GetString($"{nameof(YellowSquare)}", _contentSrc);
+
+            // Initialized to a JSON string-literal defined above
+            EzSaverCore = EzSaverManager.Instance.GetSave(_contentSrc, isJsonStringLiteral: true, useSecurity: encrypt);
         }
 
         protected override void WriteChanges()
@@ -24,8 +30,8 @@ namespace Racer.EzSaver.Samples
 
         protected override void OnDestroy()
         {
-            // Serialized content saved to the initialized file
-            EzSaverCore.Save();
+            // Serialize the final save-data to a JSON string-literal and save it to PlayerPrefs.
+            PlayerPrefs.SetString($"{nameof(YellowSquare)}", EzSaverCore.Save());
         }
     }
 }

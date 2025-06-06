@@ -1,6 +1,5 @@
 using System;
 using System.Security.Cryptography;
-using UnityEngine;
 
 namespace Racer.EzSaver.Utilities
 {
@@ -16,8 +15,6 @@ namespace Racer.EzSaver.Utilities
     internal static class KeyGen
     {
         private const int KeySize = 16;
-        private const string KeyId = "EzSaverKey";
-        private const string KeyIv = "EzSaverIv";
 
         /// <summary>
         /// Generates a random string using a cryptographic random number generator.
@@ -28,60 +25,18 @@ namespace Racer.EzSaver.Utilities
             using var random = RandomNumberGenerator.Create();
             var key = new byte[KeySize];
             random.GetBytes(key);
-            
+
             return Convert.ToBase64String(key);
         }
 
         /// <summary>
-        /// Sets a random key and stores it in PlayerPrefs.
+        /// Returns a generated random key(as string).
         /// </summary>
-        /// <param name="rndKey">The generated random key.</param>
-        public static void SetRandomKey(out string rndKey)
-        {
-            rndKey = GenerateRndStr();
-            PlayerPrefs.SetString(KeyId, rndKey);
-        }
+        public static string GetRandomBase64Str() => GenerateRndStr();
 
         /// <summary>
-        /// Retrieves the stored key string from PlayerPrefs, generating a new one if it does not exist.
+        /// Returns the byte representation of generated random key(string) 
         /// </summary>
-        /// <returns>The stored key string.</returns>
-        public static string GetKeyStr()
-        {
-            if (!PlayerPrefs.HasKey(KeyId))
-                PlayerPrefs.SetString(KeyId, GenerateRndStr());
-
-            return PlayerPrefs.GetString(KeyId);
-        }
-
-        /// <summary>
-        /// Retrieves the stored key as a byte array.
-        /// </summary>
-        /// <returns>The stored key as a byte array.</returns>
-        public static byte[] GetKeyBytes()
-        {
-            return Convert.FromBase64String(GetKeyStr());
-        }
-
-        /// <summary>
-        /// Retrieves the stored initialization vector (IV) as a byte array, generating a new one if it does not exist.
-        /// </summary>
-        /// <returns>The stored IV as a byte array.</returns>
-        public static byte[] GetIvBytes()
-        {
-            if (!PlayerPrefs.HasKey(KeyIv))
-                PlayerPrefs.SetString(KeyIv, GenerateRndStr());
-
-            return Convert.FromBase64String(PlayerPrefs.GetString(KeyIv));
-        }
-
-        /// <summary>
-        /// Clears the stored key and IV from PlayerPrefs.
-        /// </summary>
-        public static void ClearPrefs()
-        {
-            PlayerPrefs.DeleteKey(KeyId);
-            PlayerPrefs.DeleteKey(KeyIv);
-        }
+        public static byte[] StrToBase64Bytes(string key) => Convert.FromBase64String(key);
     }
 }

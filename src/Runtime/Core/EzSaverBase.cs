@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using Racer.EzSaver.Utilities;
+using UnityEngine;
 
 namespace Racer.EzSaver.Core
 {
@@ -16,28 +17,46 @@ namespace Racer.EzSaver.Core
     }
 
     /// <summary>
-    /// Base class for EzSaver, providing base functionality for <see cref="EzSaverCore"/>.
+    /// Provides base functionality for <see cref="EzSaverCore"/>.
     /// </summary>
     public class EzSaverBase
     {
         private (string, bool) _literalInUse;
 
-        private string _loadedJson;
-        private bool _wasDecrypted;
+        private string _loadedEncryptedContent;
+        private string _cachedContent;
 
         private readonly EzSaverSettings _ezSaverSettings;
         protected JObject SaveData { get; private set; } = new();
 
+        /// <summary>
+        /// Event raised when some operations are performed on the save-file.
+        /// </summary>
         public event Action<SaveDataAction> OnSaveDataAction;
 
+        /// <summary>
+        /// Event raised when a Write operation is performed on the save-data, hence modifying it.
+        /// </summary>
+        internal event Action OnSaveDataModified;
+
+        protected bool HasSavedNewChanges;
+        internal bool IsJsonStringLiteral => _literalInUse.Item2;
+
+        public string SavePath => FileHelper.SaveDirPath;
+
+
+        protected void InvokeOnSaveDataModified()
+        {
+            OnSaveDataModified?.Invoke();
+        }
 
         /// <summary>
         /// <seealso cref="EzSaverCore"/>
         /// </summary>
-        protected EzSaverBase(string contentSource, bool fromLiteral, EzSaverSettings ezSaverSettings)
+        protected EzSaverBase(string contentSource, bool isJsonStringLiteral, EzSaverSettings ezSaverSettings)
         {
             _ezSaverSettings = ezSaverSettings;
-            _literalInUse = (contentSource, fromLiteral);
+            _literalInUse = (contentSource, isJsonStringLiteral);
 
             LoadFromSource();
         }
@@ -75,18 +94,19 @@ namespace Racer.EzSaver.Core
         /// Deletes the file associated with the current settings.
         /// </summary>
         /// <returns><c>true</c> if the file was deleted; otherwise, <c>false</c>.</returns>
-        /// <exception cref="EzSaverException">Thrown if the content source is a literal string.</exception>
+        /// <exception cref="EzSaverException">Thrown if the content source is a JSON string-literal instead of a filename.</exception>
         public void DeleteFile()
         {
-            if (_literalInUse.Item2)
+            if (IsJsonStringLiteral)
                 throw new EzSaverException(
-                    "Cannot delete a string-literal initialized in the constructor like a file." +
+                    "Cannot delete a JSON string-literal initialized in the constructor." +
+                    $"\n{_literalInUse.Item1}" +
                     "\nIf you intend to delete to a file, initialize with a filename instead.");
 
             if (_ezSaverSettings.Reader.Delete())
                 OnSaveDataAction?.Invoke(SaveDataAction.DeleteFile);
             else
-                EzLogger.Warn($"Failed to delete save file: '{FileHelper.AssignExtension(_literalInUse.Item1)}'.");
+                Debug.LogError($"Failed to delete save file: '{FileHelper.AssignExtension(_literalInUse.Item1)}'.");
         }
 
         /// <summary>
@@ -100,8 +120,7 @@ namespace Racer.EzSaver.Core
         /// </summary>
         private void LoadFromSource()
         {
-            _wasDecrypted = false;
-            var content = _literalInUse.Item2 ? _literalInUse.Item1 : _ezSaverSettings.Reader.LoadString();
+            var content = IsJsonStringLiteral ? _literalInUse.Item1 : _ezSaverSettings.Reader.LoadString();
 
             try
             {
@@ -119,13 +138,12 @@ namespace Racer.EzSaver.Core
                     {
                         try
                         {
+                            _loadedEncryptedContent = content;
                             roundTrip = _ezSaverSettings.Encryptor.Decrypt(content);
-                            _wasDecrypted = true;
                         }
                         catch
                         {
-                            _wasDecrypted = false;
-                            roundTrip = string.Empty;
+                            _loadedEncryptedContent = roundTrip = string.Empty;
                         }
                     }
                 }
@@ -136,65 +154,12 @@ namespace Racer.EzSaver.Core
 
                 ToJObject(roundTrip);
 
-                if (_ezSaverSettings.UseSecurity && _wasDecrypted)
-                {
-                    _loadedJson = content;
-                    _wasDecrypted = false;
-                }
-                else
-                    _loadedJson = string.IsNullOrEmpty(roundTrip) ? "{}" : roundTrip;
+                _cachedContent = string.IsNullOrEmpty(roundTrip) ? "{}" : roundTrip;
             }
             catch (Exception e)
             {
-                EzLogger.Error($"{e.Message}\n{e.StackTrace}");
+                Debug.LogError($"{e.Message}\n{e.StackTrace}");
             }
-        }
-
-        /// <summary>
-        /// Serializes the current save-data to a JSON string.
-        /// Use this method for final serialization, only when you're initializing from a literal string.
-        /// </summary>
-        /// <returns>The serialized JSON string.</returns>
-        public string ToSerializedJson()
-        {
-            var json = string.Empty;
-
-            try
-            {
-                json = EzSaverSerializer.Serialize(SaveData);
-
-                if (_ezSaverSettings.UseSecurity)
-                    json = _ezSaverSettings.Encryptor.Encrypt(json);
-            }
-            catch (Exception e)
-            {
-                EzLogger.Error($"{e.Message}\n{e.StackTrace}");
-            }
-
-            return json;
-        }
-
-        /// <summary>
-        /// Serializes and saves the current save-data to an initialized file source.
-        /// Use this method without calling <see cref="ToSerializedJson"/>, only when you're initializing from a file source.
-        /// <remarks>
-        /// This method should only be called once for every instance created!
-        /// </remarks>
-        /// </summary>
-        /// <exception cref="EzSaverException">Thrown if the content source is a literal string instead of file.</exception>
-        public void Save()
-        {
-            if (_literalInUse.Item2)
-                throw new EzSaverException(
-                    "Cannot save a string-literal initialized from the constructor." +
-                    $"\nIf you intend to save to a file, initialize with a filename instead, otherwise use {nameof(ToSerializedJson)}");
-
-            var serializedJson = ToSerializedJson();
-
-            if (!_wasDecrypted && _loadedJson == serializedJson)
-                return;
-
-            _ezSaverSettings.Reader.SaveString(serializedJson);
         }
 
         /// <summary>
@@ -213,6 +178,74 @@ namespace Racer.EzSaver.Core
             catch
             {
                 // ignored
+            }
+        }
+
+        /// <summary>
+        /// Serializes the current save-data to a JSON string.
+        /// </summary>
+        /// <returns>The serialized JSON string.</returns>
+        private string ToSerializedJson()
+        {
+            var json = string.Empty;
+
+            try
+            {
+                _cachedContent = string.IsNullOrEmpty(_loadedEncryptedContent)
+                    ? _cachedContent
+                    : _loadedEncryptedContent;
+
+                json = EzSaverSerializer.Serialize(SaveData);
+
+                if (_ezSaverSettings.UseSecurity)
+                    json = _ezSaverSettings.Encryptor.Encrypt(json);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"{e.Message}\n{e.StackTrace}");
+            }
+
+            return json;
+        }
+
+        /// <summary>
+        /// Serializes and saves the current save-data to an initialized file or returns the contents as a serialized JSON string-literal.
+        /// <returns>
+        /// An <c>empty string</c> if initialized from a <c>file</c> and saved successfully.
+        /// The <c>serialized-contents</c> if initialized from as a <c>JSON string-literal</c> and serialization was successful</returns>
+        /// </summary>
+        public string Save()
+        {
+            try
+            {
+                if (HasSavedNewChanges) return IsJsonStringLiteral ? _cachedContent : string.Empty;
+
+                var serializedJson = ToSerializedJson();
+
+                if (_cachedContent == serializedJson)
+                {
+                    HasSavedNewChanges = true;
+                    return IsJsonStringLiteral ? serializedJson : string.Empty;
+                }
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+                Debug.LogWarning("This build platform does not support initialization from save-files.");
+#else
+                if (!IsJsonStringLiteral)
+                    _ezSaverSettings.Reader.SaveString(serializedJson);
+#endif
+
+                _cachedContent = serializedJson;
+                _loadedEncryptedContent = string.Empty;
+
+                HasSavedNewChanges = true;
+
+                return IsJsonStringLiteral ? serializedJson : string.Empty;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Exception was thrown while attempting to save.\n{e.Message}\n{e.StackTrace}");
+                return string.Empty;
             }
         }
     }

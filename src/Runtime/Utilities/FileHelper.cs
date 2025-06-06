@@ -2,13 +2,15 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Racer.EzSaver.Core;
+using UnityEngine;
 
 namespace Racer.EzSaver.Utilities
 {
     internal static class FileHelper
     {
         private static string[] FilteredExtensions { get; } = { ".meta" };
-        private static string SaveDirPath => PathUtil.SaveDirPath;
+        public static string SaveDirPath => EzSaverConfig.Load.FileRootPath;
 
 
         /// <summary>
@@ -53,7 +55,7 @@ namespace Racer.EzSaver.Utilities
             }
             catch (Exception e)
             {
-                EzLogger.Error(e);
+                Debug.LogError(e);
             }
         }
 
@@ -70,7 +72,7 @@ namespace Racer.EzSaver.Utilities
             }
             catch (Exception e)
             {
-                EzLogger.Error(e);
+                Debug.LogError(e);
             }
 
             return string.Empty;
@@ -92,7 +94,7 @@ namespace Racer.EzSaver.Utilities
             }
             catch (Exception e)
             {
-                EzLogger.Error(e);
+                Debug.LogError(e);
             }
 
             return new List<string>();
@@ -121,7 +123,7 @@ namespace Racer.EzSaver.Utilities
             }
             catch (Exception e)
             {
-                EzLogger.Error(e);
+                Debug.LogError(e);
             }
 
             return false;
@@ -148,11 +150,11 @@ namespace Racer.EzSaver.Utilities
             {
                 return Path.HasExtension(filename)
                     ? filename
-                    : filename + PathUtil.DefaultFileExtension;
+                    : filename + EzSaverConfig.Load.SaveFileExtension;
             }
             catch (Exception e)
             {
-                EzLogger.Error(e);
+                Debug.LogError(e);
                 return filename;
             }
         }

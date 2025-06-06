@@ -1,41 +1,46 @@
 ﻿using System;
-using Racer.EzSaver.Utilities;
+
+#if UNITY_EDITOR
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("Racer.EzSaverTest")]
+#endif
 
 namespace Racer.EzSaver.Core
 {
     /// <summary>
-    /// Core class for EzSaver, providing methods for reading and writing data.
+    /// Core class for EzSaver, providing methods for initialization, reading and writing of data.
     /// </summary>
+    /// <remarks>
+    /// This class is designed to be used with <see cref="Racer.EzSaver.Utilities.EzSaverManager"/> for managing save-files.
+    /// </remarks>
     public class EzSaverCore : EzSaverBase
     {
         #region Setup
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EzSaverCore"/> class.
+        /// Initializes a new instance of the <see cref="EzSaverCore"/> class with the specified content source.
         /// </summary>
-        /// <param name="contentSource">The source of the content(either a filename, eg. SaveFile.txt or a literal string, eg. "{ "Highscore": 4 }").</param>
-        /// <param name="fromLiteral">Indicates whether the content is from a literal string(true) or a file(false-default).</param>
-        /// <param name="settings">The settings for EzSaver.</param>
-        /// <remarks>
-        /// Initialize with <paramref name="settings"/> to use custom settings, such as a custom <see cref="IReader"/> or <see cref="IEncryptor"/>.
-        /// </remarks>
-        public EzSaverCore(string contentSource, bool fromLiteral, EzSaverSettings settings)
-            : base(contentSource, fromLiteral, settings)
+        /// <param name="contentSource">The source of the content, typically a file path or JSON string-literal.</param>
+        /// <param name="isJsonStringLiteral">Indicates whether the content source is a JSON string-literal.</param>
+        /// <param name="useSecurity">Indicates whether security features (e.g., encryption) should be enabled.</param>
+        internal EzSaverCore(string contentSource, bool isJsonStringLiteral = false, bool useSecurity = false)
+            : this(contentSource, isJsonStringLiteral,
+                new EzSaverSettings(new FileReader(contentSource), new AesEncryptor(), useSecurity))
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EzSaverCore"/> class with default settings.
+        /// Initializes a new instance of the <see cref="EzSaverCore"/> class with the specified content source and settings.
         /// </summary>
-        /// <param name="contentSource">The source of the content(either a filename, eg. SaveFile.txt or a literal string, eg. "{ "Highscore": 4 }").</param>
-        /// <param name="fromLiteral">Indicates whether the content is from a literal string(true) or a file(false-default).</param>
-        /// <param name="useSecurity">Indicates whether to use security features(encryption/decryption).</param>
+        /// <param name="contentSource">The source of the content, typically a file path or JSON string-literal.</param>
+        /// <param name="isJsonStringLiteral">Indicates whether the content source is a JSON string-literal.</param>
+        /// <param name="settings">The settings to use for the EzSaver instance.</param>
         /// <remarks>
-        /// Content source is loaded automatically after initialization.
+        /// Best used with custom settings for file reading and encryption.
         /// </remarks>
-        public EzSaverCore(string contentSource, bool fromLiteral = false, bool useSecurity = false)
-            : this(contentSource, fromLiteral,
-                new EzSaverSettings(new FileReader(contentSource), new AesEncryptor(), useSecurity))
+        internal EzSaverCore(string contentSource, bool isJsonStringLiteral, EzSaverSettings settings)
+            : base(contentSource, isJsonStringLiteral, settings)
         {
         }
 
@@ -52,11 +57,7 @@ namespace Racer.EzSaver.Core
         /// <returns>The value associated with the specified key, or the default value if the key does not exist.</returns>
         public T Read<T>(string key, T defaultValue = default)
         {
-            if (Exists(key)) return EzSaverSerializer.DeserializeKey<T>(key, SaveData);
-
-            EzLogger.Warn($"'{key}' did not exist initially, default value was used.");
-
-            return defaultValue;
+            return Exists(key) ? EzSaverSerializer.DeserializeKey<T>(key, SaveData) : defaultValue;
         }
 
         /// <summary>
@@ -110,10 +111,13 @@ namespace Racer.EzSaver.Core
                     SaveData[key] = EzSaverSerializer.SerializeKey(value);
                 else
                     SaveData.Add(key, EzSaverSerializer.SerializeKey(value));
+
+                InvokeOnSaveDataModified();
+                HasSavedNewChanges = false;
             }
             catch (Exception ex)
             {
-                throw new EzSaverException($"Serialization failed. \n{ex.Message}", ex);
+                throw new EzSaverException($"Serialization failed for '{key}'. \n{ex.Message}", ex);
             }
 
             return this;

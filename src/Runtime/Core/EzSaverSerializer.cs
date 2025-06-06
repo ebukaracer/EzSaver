@@ -2,7 +2,6 @@
 using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Racer.EzSaver.Utilities;
 
 namespace Racer.EzSaver.Core
 {
@@ -13,7 +12,7 @@ namespace Racer.EzSaver.Core
     {
         private static readonly JsonSerializerSettings Settings = new()
         {
-            Formatting = PathUtil.FileFormatting
+            Formatting = EzSaverConfig.Load.FileFormatting
         };
 
         private static JsonSerializer _serializer = JsonSerializer.Create(Settings);
@@ -25,9 +24,7 @@ namespace Racer.EzSaver.Core
         public static void RegisterConverters(IEnumerable<JsonConverter> converters)
         {
             foreach (var converter in converters)
-            {
                 RegisterConverter(converter);
-            }
         }
 
         /// <summary>

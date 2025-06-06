@@ -1,7 +1,7 @@
 ﻿namespace Racer.EzSaver.Core
 {
     /// <summary>
-    /// Represents the settings for EzSaver.
+    /// Represents the settings for <see cref="EzSaverCore"/>.
     /// </summary>
     public class EzSaverSettings
     {

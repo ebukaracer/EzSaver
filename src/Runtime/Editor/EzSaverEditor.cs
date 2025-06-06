@@ -1,5 +1,7 @@
 #if UNITY_EDITOR
+using System;
 using System.IO;
+using Racer.EzSaver.Core;
 using Racer.EzSaver.Utilities;
 using UnityEditor;
 using UnityEditor.PackageManager;
@@ -16,81 +18,85 @@ namespace Racer.EzSaver.Editor
     {
         private const string ContextMenuPath = "Racer/EzSaver/";
         private const string RootPath = "Assets/EzSaver";
-
-        private const string ConfigPath = RootPath + "/EzSaverConfig.asset";
         private const string SamplesPath = "Assets/Samples/EzSaver";
 
         private const string PkgId = "com.racer.ezsaver";
         private const string AssetPkgId = "EzSaver.unitypackage";
+        private static RemoveRequest _removeRequest;
 
         private static bool _isElementsImported;
         private const string ImportElementsContextMenuPath = ContextMenuPath + "Import Elements";
         private const string ForceImportElementsContextMenuPath = ContextMenuPath + "Import Elements(Force)";
 
+        private static bool _isConfigAssetCreated;
+        private const string CreateEzSaverConfigContextMenuPath = ContextMenuPath + "Create EzSaverConfig?";
+
         private const int Width = 400;
-        private const int Height = Width + 80;
+        private const int Height = Width;
 
-        private static string _activeKey;
-        private static string _id;
-        private static bool _isKeyVisible;
-
-        private static RemoveRequest _removeRequest;
         private static EzSaverConfig _ezSaverConfig;
-        private static SerializedObject _config;
-        private static SerializedProperty _fileName;
+        private static string _saveFileName;
 
-
-        private static void InitMenuData()
-        {
-            if (!_ezSaverConfig) return;
-
-            _activeKey = KeyGen.GetKeyStr();
-
-            _config = new SerializedObject(_ezSaverConfig);
-            _fileName = _config.FindProperty("fileName");
-        }
-
-        private static void RefreshMenu()
-        {
-            Startup();
-            InitMenuData();
-        }
 
         [MenuItem(ContextMenuPath + "Menu", priority = 0)]
         private static void DisplayWindow()
         {
+            _ezSaverConfig = EzSaverConfig.Load;
+
+            if (_ezSaverConfig == null) return;
+
             var window = GetWindow<EzSaverEditor>("EzSaver Menu");
 
             // Limit size of the window to non re-sizable.
             window.maxSize = window.minSize = new Vector2(Width, Height);
-
-            InitMenuData();
         }
 
-        [InitializeOnLoadMethod]
-        private static void AutoRefresh()
+        [MenuItem(CreateEzSaverConfigContextMenuPath, false, priority = 1)]
+        public static void CreateEzSaverConfig()
         {
-            Startup();
+            Debug.Log($"{nameof(EzSaverCore)} was created successfully. Ensure to backup your credentials!");
 
-            if (HasOpenInstances<EzSaverEditor>()) InitMenuData();
-        }
+            var folderPath = "Assets/Resources";
 
-        private static void Startup()
-        {
-            // if no data exists yet create and reference a new instance
-            if (_ezSaverConfig) return;
+            if (!Directory.Exists(folderPath))
+                Directory.CreateDirectory(folderPath);
 
-            _ezSaverConfig = AssetDatabase.LoadAssetAtPath<EzSaverConfig>(ConfigPath);
+            var assetPath = $"{folderPath}/{nameof(EzSaverConfig)}.asset";
 
-            // if a previous data exists and is loaded successfully, we use it.
-            if (_ezSaverConfig) return;
+            var ezSaverConfig = CreateInstance<EzSaverConfig>();
 
-            // otherwise create and reference a new instance.
-            _ezSaverConfig = CreateInstance<EzSaverConfig>();
+            ezSaverConfig.ActiveKey = KeyGen.GetRandomBase64Str();
+            ezSaverConfig.ActiveIv = KeyGen.GetRandomBase64Str();
 
-            DirUtils.CreateDirectory(RootPath);
-            AssetDatabase.CreateAsset(_ezSaverConfig, ConfigPath);
+            AssetDatabase.CreateAsset(ezSaverConfig, assetPath);
+            AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+
+            // Ping to the created config asset in next update
+            EditorApplication.delayCall += () =>
+            {
+                var configAsset = AssetDatabase.LoadAssetAtPath<EzSaverConfig>(assetPath);
+
+                if (configAsset)
+                    EditorGUIUtility.PingObject(configAsset);
+                else
+                    Debug.LogError($"Failed to create {nameof(EzSaverConfig)} at: {assetPath}");
+            };
+        }
+
+        [MenuItem(CreateEzSaverConfigContextMenuPath, true, priority = 1)]
+        private static bool ValidateCreateEzSaverConfig()
+        {
+            try
+            {
+                _isConfigAssetCreated = EzSaverConfig.Load;
+            }
+            catch (Exception)
+            {
+                _isConfigAssetCreated = false;
+            }
+
+            return !_isConfigAssetCreated;
         }
 
         [MenuItem(ImportElementsContextMenuPath, false, priority = 1)]
@@ -110,7 +116,7 @@ namespace Racer.EzSaver.Editor
             ImportElements();
         }
 
-        [MenuItem(ContextMenuPath + "Import Elements", true, priority = 1)]
+        [MenuItem(ImportElementsContextMenuPath, true, priority = 1)]
         private static bool ValidateImportElements()
         {
             _isElementsImported = AssetDatabase.IsValidFolder($"{RootPath}/Elements");
@@ -139,14 +145,15 @@ namespace Racer.EzSaver.Editor
                 case StatusCode.Success:
                 {
                     DirUtils.DeleteDirectory(RootPath);
-                    KeyGen.ClearPrefs();
                     DirUtils.DeleteDirectory(SamplesPath);
+                    AssetDatabase.DeleteAsset("Assets/Resources/EzSaverConfig.asset");
+                    PlayerPrefs.DeleteKey("YellowSquare");
                     AssetDatabase.Refresh();
 
                     break;
                 }
                 case >= StatusCode.Failure:
-                    EzLogger.Warn($"Failed to remove package: '{PkgId}'\n{_removeRequest.Error.message}");
+                    Debug.LogError($"Failed to remove package: '{PkgId}'\n{_removeRequest.Error.message}");
                     break;
             }
 
@@ -157,45 +164,48 @@ namespace Racer.EzSaver.Editor
         {
             GUILayout.Space(10);
 
-            if (!_ezSaverConfig)
-            {
-                if (GUILayout.Button(Styles.RefreshBtn))
-                    RefreshMenu();
-
-                return;
-            }
-
-            _config.Update();
             EditorGUIUtility.labelWidth = 200;
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             GUILayout.Label(Styles.SectionOne, EditorStyles.boldLabel);
             EditorGUI.indentLevel = 1;
-            EditorGUILayout.LabelField("Save-File Path:", PathUtil.SaveDirPath);
-            EditorGUILayout.LabelField("Save-File Name:", PathUtil.DefaultFileName);
-            EditorGUILayout.LabelField("Save-File Extension:", PathUtil.DefaultFileExtension);
-            EditorGUILayout.LabelField("Save-File Formatting:", $"{PathUtil.FileFormatting}");
+            EditorGUILayout.LabelField("Save-File Name:", _ezSaverConfig.SaveFileName);
+            EditorGUILayout.LabelField("Save-File Path:", _ezSaverConfig.FileRootPath);
+            EditorGUILayout.LabelField("Save-File Extension:", _ezSaverConfig.SaveFileExtension);
+            EditorGUILayout.LabelField("Save-File Formatting:", _ezSaverConfig.FileFormatting.ToString());
 
             GUILayout.Space(5);
-            if (GUILayout.Button(Styles.PingBtn))
-                PingLocation();
 
             if (GUILayout.Button(Styles.CreateBtn))
             {
-                if (EzSaverUtility.CreateFile())
+                if (EzSaverUtility.CreateFile(_ezSaverConfig.FileFullName))
                 {
-                    _fileName.stringValue = PathUtil.FullFileName;
+                    _saveFileName = _ezSaverConfig.FileFullName;
                     AssetDatabase.Refresh();
                     PingLocation();
                 }
             }
+
+            if (GUILayout.Button(Styles.PingBtn))
+                PingLocation();
+
+            EditorGUILayout.EndVertical();
+
+            GUILayout.Space(10);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
             if (GUILayout.Button(Styles.LoadBtn))
                 EzSaverUtility.LoadAllFiles();
 
             if (GUILayout.Button(Styles.DeleteAllBtn))
             {
-                EzSaverUtility.DeleteAllFiles();
-                AssetDatabase.Refresh();
+                if (EditorUtility.DisplayDialog("Confirm Delete All",
+                        $"All save-files at: {_ezSaverConfig.FileRootPath}, will be permanently deleted?",
+                        "Sure",
+                        "Cancel"))
+                {
+                    EzSaverUtility.DeleteAllFiles();
+                    AssetDatabase.Refresh();
+                }
             }
 
             EditorGUILayout.EndVertical();
@@ -203,92 +213,80 @@ namespace Racer.EzSaver.Editor
             GUILayout.Space(10);
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             GUILayout.Label(Styles.SectionTwo, EditorStyles.boldLabel);
-            _fileName.stringValue = EditorGUILayout.TextField(Styles.SaveFile, _fileName.stringValue);
+            _saveFileName = EditorGUILayout.TextField(Styles.SaveFile, _saveFileName);
 
-            if (string.IsNullOrEmpty(_fileName.stringValue))
+            if (string.IsNullOrEmpty(_saveFileName))
             {
                 var pos = new Rect(GUILayoutUtility.GetLastRect());
-                EditorGUI.LabelField(pos, "Enter an existing [Save-File]",
-                    Styles.PlaceHolderStyle(new RectOffset(170, 0, 0, 0)));
+                EditorGUI.LabelField(pos, "e.g. Data.json",
+                    Styles.PlaceHolderStyle(new RectOffset(90, 0, 0, 0)));
             }
 
             GUILayout.Space(5);
+
             if (GUILayout.Button(Styles.PrintContentBtn))
-                if (IsFileAvailable)
-                    EzLogger.Log(EzSaverUtility.ReadFileContent(_id));
+                if (FileExists)
+                    Debug.Log(EzSaverUtility.ReadFileContent(_saveFileName));
 
             if (GUILayout.Button(Styles.EncryptBtn))
-                if (IsFileAvailable)
-                    EzSaverUtility.EncryptFile(_id);
+                if (FileExists)
+                    EzSaverUtility.EncryptFile(_saveFileName);
 
             if (GUILayout.Button(Styles.DecryptBtn))
-                if (IsFileAvailable)
-                    EzSaverUtility.DecryptFile(_id);
+                if (FileExists)
+                    EzSaverUtility.DecryptFile(_saveFileName);
 
             if (GUILayout.Button(Styles.DeleteBtn))
-                if (IsFileAvailable)
+                if (FileExists)
                 {
-                    if (EzSaverUtility.DeleteFile(_id))
+                    if (EditorUtility.DisplayDialog("Delete Save-File", $"{_saveFileName} will be permanently deleted?",
+                            "OK"))
                     {
-                        _fileName.stringValue = string.Empty;
-                        AssetDatabase.Refresh();
+                        if (EzSaverUtility.DeleteFile(_saveFileName))
+                        {
+                            _saveFileName = string.Empty;
+                            AssetDatabase.Refresh();
+                        }
                     }
                 }
 
-            if (GUILayout.Button(Styles.ResetFieldToDefaultBtn))
-                _fileName.stringValue = EzSaverConfig.DefaultFileName;
             EditorGUILayout.EndVertical();
 
             GUILayout.Space(10);
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            GUILayout.Label(Styles.SectionThree, EditorStyles.boldLabel);
 
-            _isKeyVisible = EditorGUILayout.BeginToggleGroup(Styles.KeyVisibilityToggle, _isKeyVisible);
-
-            if (_isKeyVisible)
-                EditorGUILayout.TextField(Styles.ExistingKeyField, _activeKey);
-            else
-                EditorGUILayout.PasswordField(Styles.ExistingKeyField, _activeKey);
-
-            if (GUILayout.Button(Styles.NewKeyBtn))
-            {
-                KeyGen.SetRandomKey(out _activeKey);
-                EzLogger.Log($"New current key: {_activeKey}");
-            }
-
-            EditorGUILayout.EndToggleGroup();
-            EditorGUILayout.EndVertical();
-
-            // Writes back all modified values into the real instance.
-            _config?.ApplyModifiedProperties();
+            if (EditorGUILayout.LinkButton("Config Asset?"))
+                EditorGUIUtility.PingObject(EzSaverConfig.Load);
 
             // Detect mouse click outside controls and remove focus
             if (Event.current.type == EventType.MouseDown && Event.current.button == 0)
                 GUI.FocusControl(null);
         }
 
-        private static void PingLocation()
+        private void PingLocation()
         {
-            var obj = AssetDatabase.LoadAssetAtPath<Object>(PathUtil.FullFilePath);
-            EditorGUIUtility.PingObject(obj);
+            var obj = AssetDatabase.LoadAssetAtPath<Object>(_ezSaverConfig.FileFullPath);
+
+            if (obj)
+                EditorGUIUtility.PingObject(obj);
+            else
+                Debug.LogError(
+                    $"'{_ezSaverConfig.FileFullName}' was not found at: {_ezSaverConfig.FileRootPath}, consider creating it first.");
         }
 
-        private static bool IsFileAvailable
+        private bool FileExists
         {
             get
             {
-                _id = _fileName.stringValue;
-
-                if (string.IsNullOrEmpty(_id))
+                if (string.IsNullOrEmpty(_saveFileName))
                 {
-                    EzLogger.Warn("Field cannot be empty.");
+                    Debug.LogError("Field cannot be empty.");
                     return false;
                 }
 
-                if (FileHelper.Exists(_id))
+                if (FileHelper.Exists(_saveFileName))
                     return true;
 
-                EzLogger.Warn($"'{_id}' does not exist.");
+                Debug.LogError($"'{_saveFileName}' was not found at: {_ezSaverConfig.FileRootPath}");
                 return false;
             }
         }
@@ -297,11 +295,12 @@ namespace Racer.EzSaver.Editor
         {
             #region SectionOne
 
-            public static readonly GUIContent SectionOne = new("ReadOnly (Defaults)", "Default save settings.");
+            public static readonly GUIContent SectionOne = new("Save-File (Defaults)", "Default save settings.");
 
-            public static readonly GUIContent PingBtn = new("Ping [Location]", "Pings to the save-file's location.");
+            public static readonly GUIContent PingBtn = new("Ping [Location]",
+                "Highlights the default save-file's location(if available).");
 
-            public static readonly GUIContent CreateBtn = new($"Create [{PathUtil.FullFileName}]",
+            public static readonly GUIContent CreateBtn = new("Create [Save-File]",
                 "Creates a default save-file at the default location.");
 
             public static readonly GUIContent LoadBtn = new("Load All [Save-Files]",
@@ -315,87 +314,60 @@ namespace Racer.EzSaver.Editor
             #region SectionTwo
 
             public static readonly GUIContent
-                SectionTwo = new("Operations", "Operations to be performed on the inputted save-file.");
+                SectionTwo = new("Operations", "Operations performed on the inputted save-file.");
+
+            public static readonly GUIContent SaveFile = new("Existing Save-File:",
+                "Input an existing save-file here. Include its extension as well.");
 
             public static readonly GUIContent PrintContentBtn =
                 new("Print [Content]", "Prints out the content of the save-file to the console.");
 
             public static readonly GUIContent EncryptBtn = new("Encrypt [Content]",
-                "Encrypts and overwrites(Cipher) the content of the save-file using the current 'Active key'.");
+                "Encrypts and overwrites(Cipher) the content of the save-file.");
 
             public static readonly GUIContent DecryptBtn = new("Decrypt [Content]",
-                "Decrypts and overwrites(Plain) the content of the save-file using the 'Active key' used during encryption.");
+                "Decrypts and overwrites(Plain) the content of the save-file.");
 
             public static readonly GUIContent DeleteBtn = new("Delete [File]", "Deletes the save-file");
 
-            public static readonly GUIContent RefreshBtn = new("Refresh",
-                "Refreshes the menu-window if it is not properly initialized.");
-
-            public static readonly GUIContent SaveFile = new("Save-File:",
-                "Input an existing save-file here. Include its extension as well.");
-
-            public static readonly GUIContent
-                ResetFieldToDefaultBtn = new("Reset [Field]",
-                    "Resets the field to its default value.");
-
             #endregion
 
-            #region SectionThree
-
-            public static readonly GUIContent
-                SectionThree = new("KeyGen", "Key generation for encryption and decryption.");
-
-            public static readonly GUIContent ExistingKeyField = new("Active Key(ReadOnly)",
-                "Current key being used for encrypt/decrypt operations. Each save file is encrypted and decrypted using a unique key generated for it. " +
-                "\nIf a different key is used for an existing save file, its content will be overwritten!");
-
-            public static readonly GUIContent NewKeyBtn = new("Set [New Key]",
-                "Generates and sets a new key for encryption and decryption.");
-
-            public static readonly GUIContent KeyVisibilityToggle =
-                new("Show key",
-                    "Sets the current key's visibility to true or false.");
-
-            #endregion
+            #region Helper
 
             public static GUIStyle PlaceHolderStyle(RectOffset offset)
             {
-                return new GUIStyle()
+                return new GUIStyle
                 {
                     alignment = TextAnchor.MiddleCenter,
+                    fontSize = 12,
                     padding = offset,
                     fontStyle = FontStyle.Italic,
                     normal = { textColor = Color.grey }
                 };
             }
-        }
-    }
 
-
-    internal static class DirUtils
-    {
-        public static void DeleteDirectory(string path)
-        {
-            if (!Directory.Exists(path)) return;
-
-            Directory.Delete(path, true);
-            DeleteEmptyMetaFiles(path);
+            #endregion
         }
 
-        public static void CreateDirectory(string path)
+        private static class DirUtils
         {
-            if (!Directory.Exists(path))
-                Directory.CreateDirectory(path);
-        }
+            public static void DeleteDirectory(string path)
+            {
+                if (!Directory.Exists(path)) return;
 
-        private static void DeleteEmptyMetaFiles(string directory)
-        {
-            if (Directory.Exists(directory)) return;
+                Directory.Delete(path, true);
+                DeleteEmptyMetaFiles(path);
+            }
 
-            var metaFile = directory + ".meta";
+            private static void DeleteEmptyMetaFiles(string directory)
+            {
+                if (Directory.Exists(directory)) return;
 
-            if (File.Exists(metaFile))
-                File.Delete(metaFile);
+                var metaFile = directory + ".meta";
+
+                if (File.Exists(metaFile))
+                    File.Delete(metaFile);
+            }
         }
     }
 }

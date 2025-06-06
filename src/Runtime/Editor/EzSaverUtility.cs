@@ -2,6 +2,7 @@
 using System;
 using Racer.EzSaver.Core;
 using Racer.EzSaver.Utilities;
+using UnityEngine;
 
 namespace Racer.EzSaver.Editor
 {
@@ -24,7 +25,7 @@ namespace Racer.EzSaver.Editor
 
             if (string.IsNullOrEmpty(original))
             {
-                EzLogger.Warn("File is empty.");
+                Debug.Log("File is empty.");
                 return;
             }
 
@@ -32,24 +33,24 @@ namespace Racer.EzSaver.Editor
 
             if (original.TrimStart().StartsWith('{'))
             {
-                EzLogger.Warn("Save-data was already decrypted.");
+                Debug.Log("Save-data was already decrypted.");
                 return;
             }
 
             try
             {
-                roundTrip = _aesEncryptor.Decrypt(original);
+                roundTrip = DecryptString(original);
             }
             catch (Exception e)
             {
                 roundTrip = string.Empty;
-                EzLogger.Error($"Operation failed.\n{e}");
+                Debug.LogError($"Operation failed.\n{e}");
             }
 
             if (!FileHelper.SaveString(fileName, string.IsNullOrEmpty(roundTrip) ? "{}" : roundTrip))
-                EzLogger.Warn($"Failed to save decrypted-data to '{fileName}'.");
+                Debug.LogWarning($"Failed to save decrypted-data to '{fileName}'.");
             else
-                EzLogger.Log("Operation successful.");
+                Debug.Log("Operation successful.");
         }
 
         public static void EncryptFile(string fileName)
@@ -58,7 +59,7 @@ namespace Racer.EzSaver.Editor
 
             if (string.IsNullOrEmpty(original))
             {
-                EzLogger.Warn("File is empty.");
+                Debug.Log("File is empty.");
                 return;
             }
 
@@ -67,49 +68,47 @@ namespace Racer.EzSaver.Editor
             try
             {
                 if (original.TrimStart().StartsWith('{'))
-                    encrypted = _aesEncryptor.Encrypt(original);
+                    encrypted = EncryptString(original);
                 else
                 {
-                    EzLogger.Warn("Save-data was already encrypted.");
+                    Debug.Log("Save-data was already encrypted.");
                     return;
                 }
             }
             catch (Exception e)
             {
-                EzLogger.Error(e);
+                Debug.LogError(e);
             }
 
             if (!FileHelper.SaveString(fileName, encrypted))
-                EzLogger.Warn($"Failed to save encrypted-data to '{fileName}'.");
+                Debug.LogWarning($"Failed to save encrypted-data to '{fileName}'.");
             else
-                EzLogger.Log("Operation successful.");
+                Debug.Log("Operation successful.");
         }
 
-        public static bool CreateFile()
-        {
-            var fileName = PathUtil.FullFileName;
+        public static string EncryptString(string content) => _aesEncryptor.Encrypt(content);
+        public static string DecryptString(string content) => _aesEncryptor.Decrypt(content);
 
-            if (FileHelper.Exists(fileName))
+        public static bool CreateFile(string filename)
+        {
+            if (FileHelper.Exists(filename))
             {
-                EzLogger.Warn($"'{fileName}' already exists!");
+                Debug.LogWarning($"The file '{filename}' already exists in that location!");
                 return false;
             }
 
-            FileHelper.CreateString(PathUtil.DefaultFileName);
+            FileHelper.CreateString(filename);
             return true;
         }
 
         public static bool DeleteFile(string fileName)
         {
-            if (!FileHelper.Delete(fileName)) return false;
-
-            EzLogger.Log("Operation successful.");
-            return true;
+            return FileHelper.Delete(fileName);
         }
 
         public static void LoadAllFiles()
         {
-            foreach (var file in FileHelper.LoadFiles(true)) EzLogger.Log(file);
+            foreach (var file in FileHelper.LoadFiles(true)) Debug.Log(file);
         }
 
         public static void DeleteAllFiles()

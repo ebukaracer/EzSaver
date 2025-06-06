@@ -6,9 +6,9 @@ using UnityEngine.UI;
 namespace Racer.EzSaver.Samples
 {
     /// <summary>
-    /// Demonstrates how to use <see cref="Core.EzSaverCore"/> to save and load data by using <see cref="EzSaverManager"/> singleton.
+    /// Demonstrates how to use <see cref="EzSaverCore"/> to save and load data by initializing and reusing an instance, using <see cref="EzSaverManager"/>.
     /// <remarks>
-    /// Ensure <see cref="EzSaverManager"/> prefab or a gameobject containing <see cref="EzSaverManager"/> is present in the scene.
+    /// Ensure <see cref="EzSaverManager"/> prefab or a gameobject containing it, is present in the scene.
     /// </remarks>
     /// </summary>
     internal class RedSquare : MonoBehaviour
@@ -42,13 +42,13 @@ namespace Racer.EzSaver.Samples
 
         protected virtual void InitializeEzSaver()
         {
-            // One time initialization using the singleton instance
-            EzSaverCore = EzSaverManager.Instance.CreateSaveFile(_saveFileName, encrypt);
+            // Initialized to a file without extension, default extension set in the config, will be used
+            EzSaverCore = EzSaverManager.Instance.GetSave(_saveFileName, useSecurity: encrypt);
         }
 
         private void InitializeHighscore()
         {
-            // Reused here
+            // Initialized variable reused here
             CurrentHighscore = EzSaverCore.Read("Highscore", 0);
 
             SetHighscoreText();
@@ -65,11 +65,12 @@ namespace Racer.EzSaver.Samples
             CurrentHighscore = _currentScore;
 
             SetHighscoreText();
+            WriteChanges();
         }
 
         public void ClearData()
         {
-            // Reused here
+            // ..reused here too
             EzSaverCore.ClearAll();
 
             _currentScore = CurrentHighscore = 0;
@@ -88,17 +89,23 @@ namespace Racer.EzSaver.Samples
             _highscoreText.text = "Highscore: " + CurrentHighscore;
         }
 
+        protected virtual void WriteChanges()
+        {
+            // ..reused here too
+            EzSaverCore.Write("Highscore", CurrentHighscore);
+        }
+
         /// <summary>
-        /// Writing and Saving changes here may not be advisable.
+        /// Writing and Saving changes here is not recommended.
         /// Instead you can Write() on the go, and find a more suitable trigger point to Save() all at once.
         /// </summary>
         protected virtual void OnDestroy()
         {
-            // Reused here
-            EzSaverCore.Write("Highscore", CurrentHighscore);
+            // Serialized content saved to the initialized file using the full singleton instance (unsimplified)
+            EzSaverManager.Instance.GetSave(_saveFileName).Save();
 
-            // Alternatively, using the singleton instance (unsimplified)
-            EzSaverManager.Instance.GetSaveFile(_saveFileName).Save();
+            // Or by simply calling this below, using the initialized variable 
+            // EzSaverCore.Save();
         }
     }
 }

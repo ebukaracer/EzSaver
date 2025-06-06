@@ -10,6 +10,8 @@ namespace Racer.EzSaver.Core
     /// </summary>
     public class AesEncryptor : IEncryptor
     {
+        private EzSaverConfig _ezSaverConfig;
+
         /// <summary>
         /// Encrypts the specified string using AES encryption.
         /// </summary>
@@ -17,10 +19,11 @@ namespace Racer.EzSaver.Core
         /// <returns>The encrypted string, encoded in Base64.</returns>
         public string Encrypt(string original)
         {
-            using var myAes = Aes.Create();
+            _ezSaverConfig = EzSaverConfig.Load;
 
-            myAes.Key = KeyGen.GetKeyBytes();
-            myAes.IV = KeyGen.GetIvBytes();
+            using var myAes = Aes.Create();
+            myAes.Key = KeyGen.StrToBase64Bytes(_ezSaverConfig.ActiveKey);
+            myAes.IV = KeyGen.StrToBase64Bytes(_ezSaverConfig.ActiveIv);
 
             return Convert.ToBase64String(EncryptStringToBytes_Aes(original, myAes.Key, myAes.IV));
         }
@@ -32,10 +35,11 @@ namespace Racer.EzSaver.Core
         /// <returns>The decrypted string.</returns>
         public string Decrypt(string encrypted)
         {
-            using var myAes = Aes.Create();
+            _ezSaverConfig = EzSaverConfig.Load;
 
-            myAes.Key = KeyGen.GetKeyBytes();
-            myAes.IV = KeyGen.GetIvBytes();
+            using var myAes = Aes.Create();
+            myAes.Key = KeyGen.StrToBase64Bytes(_ezSaverConfig.ActiveKey);
+            myAes.IV = KeyGen.StrToBase64Bytes(_ezSaverConfig.ActiveIv);
 
             return DecryptStringFromBytes_Aes(Convert.FromBase64String(encrypted), myAes.Key, myAes.IV);
         }
