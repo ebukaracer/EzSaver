@@ -1,11 +1,5 @@
 ﻿using System;
 
-#if UNITY_EDITOR
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("Racer.EzSaverTest")]
-#endif
-
 namespace Racer.EzSaver.Core
 {
     /// <summary>
@@ -26,7 +20,7 @@ namespace Racer.EzSaver.Core
         /// <param name="useSecurity">Indicates whether security features (e.g., encryption) should be enabled.</param>
         internal EzSaverCore(string contentSource, bool isJsonStringLiteral = false, bool useSecurity = false)
             : this(contentSource, isJsonStringLiteral,
-                new EzSaverSettings(new FileReader(contentSource), new AesEncryptor(), useSecurity))
+                new EzSaverSettings(new FileReader(contentSource), new AesEncryptor(), EzSaverConfig.Load, useSecurity))
         {
         }
 
@@ -35,7 +29,7 @@ namespace Racer.EzSaver.Core
         /// </summary>
         /// <param name="contentSource">The source of the content, typically a file path or JSON string-literal.</param>
         /// <param name="isJsonStringLiteral">Indicates whether the content source is a JSON string-literal.</param>
-        /// <param name="settings">The settings to use for the EzSaver instance.</param>
+        /// <param name="settings">Custom settings for this instance.</param>
         /// <remarks>
         /// Best used with custom settings for file reading and encryption.
         /// </remarks>
@@ -111,9 +105,6 @@ namespace Racer.EzSaver.Core
                     SaveData[key] = EzSaverSerializer.SerializeKey(value);
                 else
                     SaveData.Add(key, EzSaverSerializer.SerializeKey(value));
-
-                InvokeOnSaveDataModified();
-                HasSavedNewChanges = false;
             }
             catch (Exception ex)
             {

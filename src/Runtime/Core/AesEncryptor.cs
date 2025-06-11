@@ -13,7 +13,7 @@ namespace Racer.EzSaver.Core
         private EzSaverConfig _ezSaverConfig;
 
         /// <summary>
-        /// Encrypts the specified string using AES encryption.
+        /// Encrypts the specified string using the key and IV from the EzSaver config asset.
         /// </summary>
         /// <param name="original">The string to encrypt.</param>
         /// <returns>The encrypted string, encoded in Base64.</returns>
@@ -29,7 +29,7 @@ namespace Racer.EzSaver.Core
         }
 
         /// <summary>
-        /// Decrypts the specified encrypted string using AES decryption.
+        /// Decrypts the specified encrypted string using the key and IV from the EzSaver config asset.
         /// </summary>
         /// <param name="encrypted">The encrypted string, encoded in Base64.</param>
         /// <returns>The decrypted string.</returns>
@@ -45,7 +45,7 @@ namespace Racer.EzSaver.Core
         }
 
         /// <summary>
-        /// Encrypts a string to a byte array using AES encryption.
+        /// AES encryption logic
         /// </summary>
         /// <param name="plainText">The string to encrypt.</param>
         /// <param name="key">The encryption key.</param>
@@ -81,7 +81,7 @@ namespace Racer.EzSaver.Core
         }
 
         /// <summary>
-        /// Decrypts a byte array to a string using AES decryption.
+        /// AES decryption logic.
         /// </summary>
         /// <param name="cipherText">The byte array to decrypt.</param>
         /// <param name="key">The decryption key.</param>
@@ -116,7 +116,7 @@ namespace Racer.EzSaver.Core
     /// <summary>
     /// Defines methods for encryption and decryption.
     /// </summary>
-    public interface IEncryptor
+    internal interface IEncryptor
     {
         /// <summary>
         /// Encrypts the specified content.

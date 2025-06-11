@@ -1,10 +1,15 @@
 ﻿namespace Racer.EzSaver.Core
 {
     /// <summary>
-    /// Represents the settings for <see cref="EzSaverCore"/>.
+    /// Represents the settings for EzSaver.
     /// </summary>
-    public class EzSaverSettings
+    internal class EzSaverSettings
     {
+        /// <summary>
+        /// Gets the EzSaver configuration.
+        /// </summary>
+        public IEzSaverConfig EzSaverConfig { get; }
+
         /// <summary>
         /// Gets the encryptor used for encryption.
         /// </summary>
@@ -26,15 +31,18 @@
         /// </summary>
         /// <param name="reader">The reader used for reading data.</param>
         /// <param name="encryptor">The encryptor used for encryption.</param>
+        /// <param name="ezSaverConfig">A reference to <see cref="EzSaverConfig"/> asset</param>
         /// <param name="useSecurity">A value indicating whether security is used.</param>
         /// <remarks>
         /// Security here is optional, if enabled, the content will be encrypted/decrypted.
         /// </remarks>
-        public EzSaverSettings(IReader reader, IEncryptor encryptor, bool useSecurity = false)
+        public EzSaverSettings(IReader reader, IEncryptor encryptor, IEzSaverConfig ezSaverConfig,
+            bool useSecurity = false)
         {
             Encryptor = encryptor;
             Reader = reader;
             UseSecurity = useSecurity;
+            EzSaverConfig = ezSaverConfig;
         }
     }
 }

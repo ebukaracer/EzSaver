@@ -5,6 +5,7 @@ A Flexible and Secure Saver for Unity Games, Enabling JSON Serialization and Sec
 
  [View in DocFx](https://ebukaracer.github.io/EzSaver)
 ## Features
+- Safe and secure file storage
 - Supports encryption(AES)
 - Custom-type JSON serialization
 - Supports file saving of various extensions
@@ -22,13 +23,13 @@ _Inside the Unity Editor using the Package Manager:_
 ## Dependencies
 This package depends on **Newtonsoft Json (v3.2.1)**. If it's not already available in your project, you can install it via the Unity Package Manager:
 - Click the **(+)** button and select **"Add package by name"**
-- Enter the package name: `com.unity.nuget.newtonsoft-json`
+- Enter the package name: [com.unity.nuget.newtonsoft-json](https://docs.unity3d.com/Packages/com.unity.nuget.newtonsoft-json@3.2/changelog/CHANGELOG.html)
 -  Click **Add**
 
 ## Setup
 After installation, use the menu options:
-- `Racer > EzSaver > Create EzSaverConfig?` to initialize and create the required `config` asset, necessary for the package to work.
-- `Racer > EzSaver > Import Elements` to import the prebuilt elements(prefabs) of this package, which will speed up your workflow.
+- `Racer > EzSaver > Create EzSaverConfig?` to create and initialize the required configuration file, necessary for the package to work.
+- `Racer > EzSaver > Import Elements` to import the prebuilt elements(prefabs) of this package, which will speed up your workflow(optional).
 ## Quick Usage
 After importing the package's **Elements**, locate the **EzSaverManager** prefab and add it to the scene where you want to enable save functionality.
 #### Initialize a save-file:
@@ -93,7 +94,7 @@ _ezSaverCore.DeleteFile();
 ```
 
 ## Samples and Best Practices
-- Always generate a unique set of keys for each project and back them up securely. Avoid using the default keys provided during installation.
+- Always generate new credentials for each project and back up securely.
 - In the case of any updates to newer versions, use the menu option: `Racer > EzSaver > Import Elements(Force)` 
 - Optionally import this package's demo from the package manager's `Samples` tab.
 - To remove this package completely(leaving no trace), navigate to: `Racer > EzSaver > Remove package`
@@ -110,10 +111,12 @@ _ezSaverCore.DeleteFile();
 > `Racer > EzSaver > Menu > Config Asset`.
 
 **Q4. What could cause data loss?**
-> Imagine this scenario: You deploy a project `xyz` using credentials `abc` (save-keys). Later, if you generate new credentials `cba` for the same project `xyz`, all previous save data tied to `abc` will be overwritten and lost. To prevent this, always back up your credentials and restore them when needed using the Config Asset.
+> Imagine this scenario: You deploy a project `xyz` using credentials `abc` (save-keys). Later, if you generate new credentials `cba` for the same project `xyz`, all previous save data tied to `abc` will be overwritten and lost. To prevent this, always back up your credentials and restore them when needed using the **Config Asset**. 
 
 **Q5. Does that mean I should never change the current credentials?**
-> Not necessarily! You can generate new credentials anytime during development. If potential data loss isn't a concern, feel free to proceed.
+> Not necessarily! You can generate new credentials anytime during development. If potential data loss isn't a concern, feel free to proceed. Even If credential regeneration causes save data to be overwritten, the system automatically creates a backup of the original save file. This backup uses a naming pattern based on the original filename: 
+> >For example, if your original save file is `data.json`, the backup will be saved as `data-backup0.json`. 
+> This gives you a way to recover the lost data if needed.
 
 **Q6. Can I modify the contents of the save file?**
 > Absolutely — as long as encryption is disabled. Modifying an encrypted save file will cause decryption to fail, resulting in data loss. It’s recommended to only modify the plain JSON string when encryption is turned off.
@@ -127,5 +130,19 @@ _ezSaverCore.DeleteFile();
 **Q8. What if I forget to save after making modifications?**
 > If automatic saving is enabled (which it is by default), **EzSaverManager.cs** will handle this for you. Note that automatic saving and on-the-go saving only work if you initialized from a file source. If initialized from a string literal, you'll need to manually define save trigger points.
 
+## How to Restore Lost/Overwritten Save Data
+First ensure `Retain Backup File` was toggled-on in the **Config Asset**, then:
+- Locate the backup file:  
+    - Find the backup file (e.g., `data-backup0.json`) in the default save location.
+- Recover the original save:
+    - Open the backup file.
+    - Copy its contents and paste them into your original save file (e.g., overwrite e.g., `data.json` with the contents of `data-backup0.json`).
+- Restore the original credentials:
+    - Open the **Config Asset** tool.
+    - Choose **Restore Credentials File**.
+    - From the file menu, select the credentials file that was originally used with your `data.json` save-file (prior to generating the new ones).
+- Apply changes:  
+    - After restoring the correct credentials for the save-data, the system will recognize and resume from the original saved state.
+  
 ## [Contributing](https://ebukaracer.github.io/ebukaracer/md/CONTRIBUTING.html) 
 Contributions are welcome! Please open an issue or submit a pull request.

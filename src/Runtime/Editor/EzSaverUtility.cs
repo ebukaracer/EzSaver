@@ -47,7 +47,7 @@ namespace Racer.EzSaver.Editor
                 Debug.LogError($"Operation failed.\n{e}");
             }
 
-            if (!FileHelper.SaveString(fileName, string.IsNullOrEmpty(roundTrip) ? "{}" : roundTrip))
+            if (!FileHelper.UpdateString(fileName, string.IsNullOrEmpty(roundTrip) ? original : roundTrip))
                 Debug.LogWarning($"Failed to save decrypted-data to '{fileName}'.");
             else
                 Debug.Log("Operation successful.");
@@ -80,7 +80,7 @@ namespace Racer.EzSaver.Editor
                 Debug.LogError(e);
             }
 
-            if (!FileHelper.SaveString(fileName, encrypted))
+            if (!FileHelper.UpdateString(fileName, encrypted))
                 Debug.LogWarning($"Failed to save encrypted-data to '{fileName}'.");
             else
                 Debug.Log("Operation successful.");

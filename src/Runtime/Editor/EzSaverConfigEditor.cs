@@ -17,6 +17,7 @@ namespace Racer.EzSaver.Editor
         private SerializedProperty _saveFileFormatting;
         private SerializedProperty _saveFileName;
         private SerializedProperty _saveFileBuildPath;
+        private SerializedProperty _retainBackupFile;
         private SerializedProperty _distinctSavePaths;
 
         private EzSaverConfig _ezSaverConfig;
@@ -47,8 +48,9 @@ namespace Racer.EzSaver.Editor
             _saveFileFormatting = serializedObject.FindProperty("saveFileFormatting");
             _saveFileBuildPath = serializedObject.FindProperty("saveFileBuildPath");
             _distinctSavePaths = serializedObject.FindProperty("distinctSavePaths");
+            _retainBackupFile = serializedObject.FindProperty("retainBackupFile");
         }
-        
+
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
@@ -64,7 +66,7 @@ namespace Racer.EzSaver.Editor
             EditorGUILayout.PropertyField(_saveFileExtension);
             EditorGUILayout.PropertyField(_saveFileFormatting);
 
-
+            EditorGUILayout.PropertyField(_retainBackupFile);
             EditorGUILayout.PropertyField(_distinctSavePaths);
 
             GUILayout.Space(5);
@@ -82,7 +84,7 @@ namespace Racer.EzSaver.Editor
             serializedObject.ApplyModifiedProperties();
 
             GUILayout.Space(15);
-            GUILayout.Label(Styles.KeygenSection, EditorStyles.boldLabel);
+            GUILayout.Label(Styles.CredentialsSection, EditorStyles.boldLabel);
 
             _isKeyVisible = EditorGUILayout.BeginToggleGroup(Styles.KeyVisibilityToggle, _isKeyVisible);
 
@@ -101,18 +103,18 @@ namespace Racer.EzSaver.Editor
             GUILayout.Space(5);
 
             EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button(Styles.NewKeysBtn))
+            if (GUILayout.Button(Styles.NewCredBtn))
             {
                 RegenerateCred(true);
                 RegenerateCred(false);
             }
 
-            if (GUILayout.Button(Styles.BackupKeysBtn))
+            if (GUILayout.Button(Styles.BackupCredBtn))
                 BackupKeys();
 
             EditorGUILayout.EndHorizontal();
 
-            if (GUILayout.Button(Styles.RestoreBackupKeysBtn))
+            if (GUILayout.Button(Styles.LoadCredBtn))
                 RestoreBackupKeys();
 
             TryLoadBackupFile();
@@ -124,7 +126,7 @@ namespace Racer.EzSaver.Editor
 
         private void RestoreBackupKeys()
         {
-            _path = EditorUtility.OpenFilePanel("Load Backup File", "", "json");
+            _path = EditorUtility.OpenFilePanel("Load Credentials File", "", "json");
 
             if (string.IsNullOrEmpty(_path)) return;
 
@@ -132,11 +134,11 @@ namespace Racer.EzSaver.Editor
             {
                 var json = File.ReadAllText(_path);
                 _loadedBackup = JsonUtility.FromJson<EzSaverKeyBackup>(json);
-                _status = ("Loaded backup file.", MessageType.Info);
+                _status = ("Credentials file loaded successfully.", MessageType.Info);
             }
             catch
             {
-                _status = ("Invalid file format.", MessageType.Error);
+                _status = ("Invalid file format!", MessageType.Error);
             }
         }
 
@@ -148,11 +150,11 @@ namespace Racer.EzSaver.Editor
                 {
                     if (TryRestoreBackup())
                     {
-                        _status = ("Credentials applied successfully.", MessageType.Info);
+                        _status = ("Active credentials applied successfully.", MessageType.Info);
                         AssetDatabase.SaveAssets();
                     }
                     else
-                        _status = ("Invalid backup; failed validation.", MessageType.Error);
+                        _status = ("Invalid credentials file; failed validation.", MessageType.Error);
 
                     // Clear the loaded backup after applying
                     _loadedBackup = null;
@@ -190,7 +192,7 @@ namespace Racer.EzSaver.Editor
 
         private void BackupKeys()
         {
-            var path = EditorUtility.SaveFilePanel("Save Backup File", "", "ezsaver_backup.json", "json");
+            var path = EditorUtility.SaveFilePanel("Save Credentials to File", "", "ezsaver_backup.json", "json");
 
             if (string.IsNullOrEmpty(path)) return;
 
@@ -202,7 +204,7 @@ namespace Racer.EzSaver.Editor
             };
 
             File.WriteAllText(path, JsonUtility.ToJson(backup, true));
-            Debug.Log("Backup file saved to: " + path);
+            Debug.Log("Credentials successfully saved to file: " + path);
         }
 
 
@@ -219,33 +221,37 @@ namespace Racer.EzSaver.Editor
         private static class Styles
         {
             public static readonly GUIContent
-                ResetToDefaultsBtn = new("Reset to Defaults", "Resets the fields to their default value");
+                ResetToDefaultsBtn = new("Reset to Defaults",
+                    "Resets all fields to their default values.\nUse this to quickly revert changes made to the save-file configuration.");
 
             public static readonly GUIContent
-                SaveFileSection = new("Save-File", "Save-file path and other configurations.");
+                SaveFileSection = new("Save-File",
+                    "Configuration settings for the save-file.\nIncludes path, name, extension, and formatting options.");
 
             public static readonly GUIContent
-                KeygenSection = new("Key Store(Readonly)", "Active credentials for encryption/decryption.");
+                CredentialsSection = new("Credentials (Readonly)",
+                    "Displays the active credentials used for encryption and decryption.\nKeys are read-only and can be regenerated, backed-up or restored.");
 
             public static readonly GUIContent KeyField = new("Active Key",
-                "Current key used for all save-files' security.");
+                "The encryption key currently in use for securing save-file contents.\nThis key is essential for decrypting save-files.");
 
             public static readonly GUIContent IvField = new("Active IV",
-                "Current IV associated with the current key.");
+                "The initialization vector (IV) associated with the active encryption key.\nUsed to ensure secure encryption.");
 
-            public static readonly GUIContent NewKeysBtn = new("Set New Keys?",
-                "Generates and sets new credentials.\nSave files contents secured with previous credentials will be overwritten and assigned to the new one!");
+            public static readonly GUIContent NewCredBtn = new("Set New Credentials?",
+                "Generates and assigns new encryption credentials.\nWarning: Save-file contents secured with previous credentials will be overwritten!");
 
-            public static readonly GUIContent BackupKeysBtn = new("Backup Keys!",
-                "Saves the current credentials to a backup file.\nDo this before regenerating new keys to ensure you can restore them later for save-files using them.");
+            public static readonly GUIContent BackupCredBtn = new("Backup Credentials!",
+                "Creates a backup file containing the current encryption credentials.\nRecommended before generating new keys to ensure recovery of old save-files.");
 
-            public static readonly GUIContent RestoreBackupKeysBtn = new("Restore Backup File",
-                "Restores the credentials from a backup file.");
+            public static readonly GUIContent LoadCredBtn = new("Load Credentials File",
+                "Loads and applies encryption credentials from a backup file.\nUse this to recover keys for decrypting save-files.");
 
             public static readonly GUIContent ValidateFileBtn = new("Validate and Apply",
-                "Validates and applies the backup keys from the loaded file");
+                "Validates the loaded file and applies its credentials.\nEnsures the backup file is compatible with the current save-file.");
 
-            public static readonly GUIContent KeyVisibilityToggle = new("Toggle Visibility");
+            public static readonly GUIContent KeyVisibilityToggle = new("Toggle Visibility",
+                "Switches between showing and hiding the encryption credentials.\nUse this to protect sensitive information.");
         }
     }
 }

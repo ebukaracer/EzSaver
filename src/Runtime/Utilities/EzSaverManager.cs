@@ -11,7 +11,7 @@ namespace Racer.EzSaver.Utilities
     /// Singleton persistent class for managing save-files via shared instances of <see cref="EzSaverCore"/>.
     /// </summary>
     /// <remarks>
-    /// Attach this script to a GameObject in the scene or drag and drop the <see cref="EzSaverManager"/> prefab to your desired scene.
+    /// Attach this script to a GameObject in your scene or simply use the <see cref="EzSaverManager"/> prefab.
     /// </remarks>
     [DefaultExecutionOrder(-999)]
     public class EzSaverManager : SingletonPattern.SingletonPersistent<EzSaverManager>

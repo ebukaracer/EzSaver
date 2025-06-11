@@ -14,35 +14,36 @@ namespace Racer.EzSaver.Utilities
 
 
         /// <summary>
-        /// Creates a new file with the given content.
+        /// Creates a new file with the given content, if it does not exist initially.
         /// </summary>
-        /// <returns>True if the file was created, otherwise false.</returns>
+        /// <returns><c>true</c> if the file never existed and was created, otherwise <c>false</c>.</returns>
         public static bool CreateString(string filename, string content = "")
         {
             filename = AssignExtension(filename);
 
-            // Do not create a new file if one already exists, hence return false.
             if (Exists(filename))
                 return false;
 
-            CreateOrWriteToFile(filename, content);
-
+            CreateOrUpdateFile(filename, content);
             return true;
         }
 
-        public static bool SaveString(string filename, string content)
+        /// <summary>
+        /// Updates the content of an existing file with the new content.
+        /// </summary>
+        /// <returns><c>true</c> if the file existed and was updated, otherwise <c>false</c></returns>
+        public static bool UpdateString(string filename, string content)
         {
             filename = AssignExtension(filename);
 
             if (!Exists(filename))
                 return false;
 
-            CreateOrWriteToFile(filename, content);
-
+            CreateOrUpdateFile(filename, content);
             return true;
         }
 
-        private static void CreateOrWriteToFile(string filename, string content)
+        private static void CreateOrUpdateFile(string filename, string content)
         {
             try
             {
@@ -59,16 +60,17 @@ namespace Racer.EzSaver.Utilities
             }
         }
 
+
+        /// <summary>
+        /// Loads the content of a file as a string.
+        /// </summary>
+        /// <returns>String contents of the file(if it exists, otherwise an empty string)</returns>
         public static string LoadString(string filename)
         {
-            filename = AssignExtension(filename);
-
             try
             {
-                if (Exists(filename, out var location))
-                {
+                if (Exists(AssignExtension(filename), out var location))
                     return File.ReadAllText(location);
-                }
             }
             catch (Exception e)
             {
@@ -129,9 +131,9 @@ namespace Racer.EzSaver.Utilities
             return false;
         }
 
-        public static bool Exists(string filename)
+        public static bool Exists(string filename, bool assignExtension = false)
         {
-            return Exists(filename, out _);
+            return Exists(AssignExtension(filename), out _);
         }
 
         private static bool Exists(string filename, out string fileLocation)

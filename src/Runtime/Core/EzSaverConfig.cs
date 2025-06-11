@@ -1,6 +1,5 @@
 using System.IO;
 using Newtonsoft.Json;
-using UnityEditor;
 using UnityEngine;
 
 namespace Racer.EzSaver.Core
@@ -20,7 +19,7 @@ namespace Racer.EzSaver.Core
         Txt,
     }
 
-    internal class EzSaverConfig : ScriptableObject
+    internal class EzSaverConfig : ScriptableObject, IEzSaverConfig
     {
         private static string SaveFileRootPath =>
             Application.isEditor ? "Assets/" : $"{Application.persistentDataPath}/";
@@ -31,29 +30,37 @@ namespace Racer.EzSaver.Core
         public const string SaveFileDefaultRootPath = "EzSaver/Saves";
 
         // Save-file section
-        [SerializeField, Tooltip("Name of the current save-file(without extension)")]
+        [SerializeField, Tooltip("Name of the current save-file (without extension).\nExample: 'Data'")]
         private string saveFileName = SaveFileDefaultName;
 
         [SerializeField,
          Tooltip(
-             "Location to store the current save-file(editor and build).\nIt defaults to the 'Assets/' folder in the editor(if left empty), then, uses persistent data-path on build(if 'distinctSavePaths' is false).")]
+             "Location to store the current save-file (editor and build).\nDefaults to 'Assets/' in the editor if left empty.\nUses persistent data-path on build if 'distinctSavePaths' is false.")]
         private string saveFilePath = SaveFileDefaultRootPath;
 
         [SerializeField,
          Tooltip(
-             "Location to store the current save-file(build only), defaults to 'persistent data-path' on build(if left empty)")]
+             "Location to store the current save-file (build only).\nDefaults to 'persistent data-path' on build if left empty.")]
         private string saveFileBuildPath;
 
         [SerializeField,
          Tooltip(
-             "Extension to use for the current save-file, other extensions can also be used when initializing a new save-file using EzSaverManager")]
+             "Extension to use for the current save-file.\nOther extensions can also be used when initializing a new save-file using EzSaverManager.")]
         private SaveFileExtension saveFileExtension = Core.SaveFileExtension.Json;
 
-        [SerializeField, Tooltip("Formatting style to use in the current save-file's content")]
+        [SerializeField, Tooltip("Formatting style to use in the current save-file's content.")]
         private Formatting saveFileFormatting = Formatting.Indented;
 
-        [SerializeField, Tooltip("Whether or not to use separate save-paths for editor and build")]
+        [SerializeField,
+         Tooltip(
+             "Retain a backup of the save-file when overwriting it.\nUseful for preserving previous contents when decrypting with different credentials.")]
+        private bool retainBackupFile = true;
+
+        [SerializeField,
+         Tooltip(
+             "Use separate save-paths for editor and build.\nIf enabled, the save-file path will differ between editor and build environments.")]
         private bool distinctSavePaths;
+
 
         // Keygen section
         [field: SerializeField] public string ActiveKey { get; internal set; }
@@ -90,6 +97,8 @@ namespace Racer.EzSaver.Core
         public string FileFullPath => Path.Combine(FileRootPath, FileFullName);
         public Formatting FileFormatting => saveFileFormatting;
 
+        public bool RetainBackupFile => retainBackupFile;
+
         public static EzSaverConfig Load
         {
             get
@@ -105,5 +114,10 @@ namespace Racer.EzSaver.Core
                 return _instance;
             }
         }
+    }
+
+    internal interface IEzSaverConfig
+    {
+        bool RetainBackupFile { get; }
     }
 }

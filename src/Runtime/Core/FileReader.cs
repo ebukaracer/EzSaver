@@ -8,36 +8,36 @@ namespace Racer.EzSaver.Core
     /// </summary>
     internal class FileReader : IReader
     {
-        private readonly string _root;
+        private readonly string _path;
+
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FileReader"/> class.
         /// </summary>
-        /// <param name="root">The root path of the file.</param>
-        public FileReader(string root)
+        /// <param name="path">Path to the filename.</param>
+        public FileReader(string path) => _path = path;
+
+        public bool Exists(string filename, bool assignExtension = false) =>
+            FileHelper.Exists(filename, assignExtension);
+
+        public void CreateString(string filename, string content)
         {
-            _root = root;
+            if (!FileHelper.CreateString(filename, content))
+                Debug.LogError(
+                    $"Failed to write the contents to '{FileHelper.AssignExtension(filename)}'.\nThe file was not found or properly initialized.");
         }
 
-        /// <summary>
-        /// Loads the string contents of the file. A new file will be initialized assuming the previous one was not found.
-        /// </summary>
-        /// <returns>The content of the file as a string.</returns>
         public string LoadString()
         {
-            FileHelper.CreateString(_root);
-            return FileHelper.LoadString(_root);
+            FileHelper.CreateString(_path);
+            return FileHelper.LoadString(_path);
         }
 
-        /// <summary>
-        /// Saves the specified content to the file.
-        /// </summary>
-        /// <param name="content">The content to save.</param>
         public void SaveString(string content)
         {
-            if (!FileHelper.SaveString(_root, content))
+            if (!FileHelper.UpdateString(_path, content))
                 Debug.LogError(
-                    $"Failed to save content to '{FileHelper.AssignExtension(_root)}'.\nThe file was not found or properly initialized.");
+                    $"Failed to save the contents to '{FileHelper.AssignExtension(_path)}'.\nThe file was not found or properly initialized.");
         }
 
         /// <summary>
@@ -46,25 +46,18 @@ namespace Racer.EzSaver.Core
         /// <returns><c>true</c> if the file was deleted; otherwise, <c>false</c>.</returns>
         public bool Delete()
         {
-            return FileHelper.Delete(_root);
+            return FileHelper.Delete(_path);
         }
     }
 
     /// <summary>
     /// Defines methods for reading and writing strings.
     /// </summary>
-    public interface IReader
+    internal interface IReader
     {
-        /// <summary>
-        /// Loads the content of the file as a string.
-        /// </summary>
-        /// <returns>The content of the file as a string.</returns>
+        bool Exists(string filename, bool assignExtension = false);
         string LoadString();
-
-        /// <summary>
-        /// Saves the specified content to the file.
-        /// </summary>
-        /// <param name="content">The content to save.</param>
+        void CreateString(string filename, string content);
         void SaveString(string content);
 
         /// <summary>
