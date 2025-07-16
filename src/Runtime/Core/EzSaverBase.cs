@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using Racer.EzSaver.Utilities;
+using UnityEditor;
 using UnityEngine;
 #if UNITY_EDITOR && UNITY_INCLUDE_TESTS
 using System.Runtime.CompilerServices;
@@ -48,7 +49,19 @@ namespace Racer.EzSaver.Core
 
         internal bool IsJsonStringLiteral { get; }
 
-        public string SavePath => FileHelper.SaveDirPath;
+        /// <summary>
+        /// Returns the full path to the save-file assuming a save-file was initialized otherwise an empty string.
+        /// </summary>
+        public string SaveFilePath
+        {
+            get
+            {
+                if (IsJsonStringLiteral) return string.Empty;
+                return FileHelper.SaveDirPath +
+                       Path.DirectorySeparatorChar +
+                       FileHelper.AssignExtension(_contentSrc);
+            }
+        }
 
         private string LastSavePoint => $"Content saved to: {FileHelper.AssignExtension(_contentSrc)}";
 

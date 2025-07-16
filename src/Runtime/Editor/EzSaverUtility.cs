@@ -33,7 +33,7 @@ namespace Racer.EzSaver.Editor
 
             if (original.TrimStart().StartsWith('{'))
             {
-                Debug.Log("Save-data was already decrypted.");
+                Debug.Log("Save-file data was already decrypted.");
                 return;
             }
 
@@ -43,14 +43,12 @@ namespace Racer.EzSaver.Editor
             }
             catch (Exception e)
             {
-                roundTrip = string.Empty;
+                roundTrip = original;
                 Debug.LogError($"Operation failed.\n{e}");
             }
 
-            if (!FileHelper.UpdateString(fileName, string.IsNullOrEmpty(roundTrip) ? original : roundTrip))
+            if (roundTrip != original && !FileHelper.UpdateString(fileName, roundTrip))
                 Debug.LogWarning($"Failed to save decrypted-data to '{fileName}'.");
-            else
-                Debug.Log("Operation successful.");
         }
 
         public static void EncryptFile(string fileName)
@@ -67,23 +65,27 @@ namespace Racer.EzSaver.Editor
 
             try
             {
+                if (original.Length <= 2)
+                {
+                    Debug.Log("Save-file contains empty JSON data.");
+                    return;
+                }
+
                 if (original.TrimStart().StartsWith('{'))
                     encrypted = EncryptString(original);
                 else
                 {
-                    Debug.Log("Save-data was already encrypted.");
+                    Debug.Log("Save-file data was already encrypted.");
                     return;
                 }
             }
             catch (Exception e)
             {
-                Debug.LogError(e);
+                Debug.LogError($"Operation failed.\n{e}");
             }
 
             if (!FileHelper.UpdateString(fileName, encrypted))
                 Debug.LogWarning($"Failed to save encrypted-data to '{fileName}'.");
-            else
-                Debug.Log("Operation successful.");
         }
 
         public static string EncryptString(string content) => _aesEncryptor.Encrypt(content);

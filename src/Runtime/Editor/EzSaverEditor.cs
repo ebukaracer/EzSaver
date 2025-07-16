@@ -37,6 +37,12 @@ namespace Racer.EzSaver.Editor
         private static EzSaverConfig _ezSaverConfig;
         private static string _saveFileName;
 
+        [InitializeOnLoadMethod]
+        private static void RefreshConfig()
+        {
+            if (!_ezSaverConfig)
+                _ezSaverConfig = EzSaverConfig.Load;
+        }
 
         [MenuItem(ContextMenuPath + "Menu", priority = 0)]
         private static void DisplayWindow()
@@ -286,7 +292,8 @@ namespace Racer.EzSaver.Editor
                 if (FileHelper.Exists(_saveFileName))
                     return true;
 
-                Debug.LogError($"'{_saveFileName}' was not found at: {_ezSaverConfig.FileRootPath}");
+                Debug.LogError(
+                    $"'{_saveFileName}' was not found at: {_ezSaverConfig.FileRootPath}\nYou may need to create it first or include the extension.");
                 return false;
             }
         }

@@ -34,26 +34,32 @@ After installation, use the menu options:
 After importing the package's **Elements**, locate the **EzSaverManager** prefab and add it to the scene where you want to enable save functionality.
 #### Initialize a save-file:
 ``` csharp
-internal class Person  
-{  
-    public int Age { get; set; }  
-}
+using Racer.EzSaver.Utilities;  
+using UnityEngine;  
+  
+public class UsageExample : MonoBehaviour
+{
+	public class Person  
+	{  
+	    public int Age { get; set; }  
+	}
 
-private Person _person;
-private int _highscore;
-private EzSaverCore _ezSaverCore;
-
-private void Awake()    
-{  
-    // Initializes and sets up a save-file  
-    _ezSaverCore = EzSaverManager.Instance.GetSave("Save.txt");  
-      
-    // Alternatively, you can initialize it with a JSON string-literal  
-    // _ezSaverCore = EzSaverManager.Instance.GetSave(@"{""Highscore"": 1}", isJsonStringLiteral: true);
-
-    // Access previously saved content or use the type's default value  
-    _person = _ezSaverCore.Read("Person", new Person());  
-    _highscore = _ezSaverCore.Read("Highscore", _highscore);  
+	private Person _person;
+	private int _highscore;
+	private EzSaverCore _ezSaverCore;
+	
+	private void Awake()    
+	{  
+	    // Initializes and sets up a save-file  
+	    _ezSaverCore = EzSaverManager.Instance.GetSave("Save.txt");  
+	      
+	    // Alternatively, you can initialize it with a JSON string-literal  
+	    // _ezSaverCore = EzSaverManager.Instance.GetSave(@"{""Highscore"": 1}", isJsonStringLiteral: true);
+	
+	    // Access previously saved content or use the type's default value  
+	    _person = _ezSaverCore.Read("Person", new Person());  
+	    _highscore = _ezSaverCore.Read("Highscore", _highscore);  
+	}
 }
 ```
 
@@ -93,6 +99,10 @@ _ezSaverCore
 _ezSaverCore.DeleteFile();
 ```
 
+### Other Features
+- **Automatic Save on Quit**: Enable `autoSaveOnQuit` in the `EzSaverManager` to automatically save changes when the application quits.
+- **Save on Modification**: Toggle `saveOnModification` to commit changes immediately after a write operation.
+- **Security**: Use the `useSecurity` parameter to enable encryption/decryption for save files.
 ## Samples and Best Practices
 - Always generate new credentials for each project and back up securely.
 - In the case of any updates to newer versions, use the menu option: `Racer > EzSaver > Import Elements(Force)` 

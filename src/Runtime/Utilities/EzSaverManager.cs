@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using Racer.EzSaver.Core;
 using UnityEngine;
 
@@ -39,7 +38,7 @@ namespace Racer.EzSaver.Utilities
 
 
         /// <summary>
-        /// Creates or reuses an instance of <see cref="EzSaverCore"/> for the specified <c>contentSource</c>
+        /// Creates or reuses an instance of <see cref="EzSaverCore"/> for the specified <c>contentSource</c>.
         /// </summary>
         /// <param name="contentSource">The save filename(Creates and uses one, if left empty) or a JSON string-literal.</param>
         /// <param name="isJsonStringLiteral">Indicates whether the content is a JSON string-literal(false) or a filename(true-default).</param>
@@ -73,6 +72,23 @@ namespace Racer.EzSaver.Utilities
         }
 
         /// <summary>
+        /// Removes the <see cref="EzSaverCore"/> instance associated with the specified <c>contentSource</c>.
+        /// </summary>
+        /// <param name="contentSource">The old save-file name or JSON string-literal</param>
+        /// <param name="isJsonStringLiteral">False if it's a save-file otherwise true(for a JSON string-literal)</param>
+        /// <remarks>
+        /// Next time <see cref="GetSave(string, bool, bool)"/> is called with the same <c>contentSource</c>, a new instance will be created.
+        /// </remarks>
+        public void ClearCacheSave(string contentSource = "Data.json", bool isJsonStringLiteral = false)
+        {
+            if (_ezSaverCoreStore.ContainsKey(contentSource))
+                _ezSaverCoreStore.Remove(contentSource);
+            else
+                Debug.LogWarning(
+                    $"No {nameof(EzSaverCore)} instance found for content source: {(isJsonStringLiteral ? $"\n{contentSource}" : contentSource)}");
+        }
+
+        /// <summary>
         /// Gets an existing <see cref="EzSaverCore"/> instance associated with the specified <paramref name="src"/>.
         /// </summary>
         /// <remarks>
@@ -85,8 +101,13 @@ namespace Racer.EzSaver.Utilities
 
         private void TryAutoSave()
         {
-            foreach (var ezSaverCore in _ezSaverCoreStore.Where(ezSaverCore => !ezSaverCore.Value.IsJsonStringLiteral))
-                ezSaverCore.Value.Save();
+            foreach (var kvp in _ezSaverCoreStore)
+            {
+                var ezSaverCore = kvp.Value;
+
+                if (!ezSaverCore.IsJsonStringLiteral)
+                    ezSaverCore.Save();
+            }
         }
 
 #if !UNITY_EDITOR // Mobile platforms tries to save, when user loses focus or when the app is paused internally
@@ -97,9 +118,9 @@ namespace Racer.EzSaver.Utilities
                 TryAutoSave();
         }
 
-        private void OnApplicationPause(bool pauseStatus)
+        private void OnApplicationPause(bool isPaused)
         {
-            if (pauseStatus && autoSaveOnQuit)
+            if (isPaused && autoSaveOnQuit)
                 TryAutoSave();
         }
 #endif
