@@ -22,20 +22,16 @@ namespace Racer.EzSaver.Utilities
 
         [SerializeField,
          Tooltip(
-             "Whether or not to commit changes to save-files(only) automatically by this script, when the application is shutdown." +
-             "\n\nNB:" +
-             "\nIt is not applicable to WebGL builds." +
-             "\nIf you're saving elsewhere, un-toggle this option.")]
+             "Automatically write save-files (not JSON string-literals) to disk when the application quits." +
+             "\n\nNote: This is not supported on WebGL builds." +
+             "\nIf you're calling Save() manually elsewhere, un-toggle this option to avoid redundant writes.")]
         private bool autoSaveOnQuit = true;
 
         [SerializeField,
          Tooltip(
-             "Whether or not to commit changes immediately to save-files(only) by this script, as soon as a write operation is made." +
-             "\n\nNB:" +
-             "\nIt is not applicable to WebGL builds." +
-             "\nIf you're saving elsewhere, un-toggle this option.")]
+             "If enabled, this manager immediately writes changes to disk for managed save-files whenever they are modified." +
+             "\n\nNote: Not supported on WebGL. If you're calling Save() manually elsewhere, un-toggle this option to avoid redundant writes.")]
         private bool saveOnModification;
-
 
         /// <summary>
         /// Creates or reuses an instance of <see cref="EzSaverCore"/> for the specified <c>contentSource</c>.
@@ -44,7 +40,7 @@ namespace Racer.EzSaver.Utilities
         /// <param name="isJsonStringLiteral">Indicates whether the content is a JSON string-literal(false) or a filename(true-default).</param>
         /// <param name="useSecurity">Indicates whether to use security features(encryption/decryption) on the save-file(false-default).</param>
         /// <remarks>
-        /// <c>contentSource</c> can either be a filename or a JSON string-literal. eg. Data.json or "{ "Highscore": 4 }".
+        /// <c>contentSource</c> can either be a filename or a JSON string-literal. e.g. Data.json or "{ "Highscore": 4 }".
         /// </remarks>
         public EzSaverCore GetSave(string contentSource = "Data.json", bool isJsonStringLiteral = false,
             bool useSecurity = false)
@@ -81,9 +77,7 @@ namespace Racer.EzSaver.Utilities
         /// </remarks>
         public void ClearCacheSave(string contentSource = "Data.json", bool isJsonStringLiteral = false)
         {
-            if (_ezSaverCoreStore.ContainsKey(contentSource))
-                _ezSaverCoreStore.Remove(contentSource);
-            else
+            if (!_ezSaverCoreStore.Remove(contentSource))
                 Debug.LogWarning(
                     $"No {nameof(EzSaverCore)} instance found for content source: {(isJsonStringLiteral ? $"\n{contentSource}" : contentSource)}");
         }

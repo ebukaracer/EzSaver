@@ -19,6 +19,7 @@ namespace Racer.EzSaver.Editor
         private const string ContextMenuPath = "Racer/EzSaver/";
         private const string RootPath = "Assets/EzSaver";
         private const string SamplesPath = "Assets/Samples/EzSaver";
+        private const string AddPrefabToScenePath = ContextMenuPath + "Add EzSaverManager Prefab to Scene";
 
         private const string PkgId = "com.racer.ezsaver";
         private const string AssetPkgId = "EzSaver.unitypackage";
@@ -27,6 +28,7 @@ namespace Racer.EzSaver.Editor
         private static bool _isElementsImported;
         private const string ImportElementsContextMenuPath = ContextMenuPath + "Import Elements";
         private const string ForceImportElementsContextMenuPath = ContextMenuPath + "Import Elements(Force)";
+        private const string PrefabsPath = RootPath + "/Elements/Prefabs/EzSaverManager.prefab";
 
         private static bool _isConfigAssetCreated;
         private const string CreateEzSaverConfigContextMenuPath = ContextMenuPath + "Create EzSaverConfig?";
@@ -36,6 +38,7 @@ namespace Racer.EzSaver.Editor
 
         private static EzSaverConfig _ezSaverConfig;
         private static string _saveFileName;
+
 
         [InitializeOnLoadMethod]
         private static void RefreshConfig()
@@ -47,14 +50,20 @@ namespace Racer.EzSaver.Editor
         [MenuItem(ContextMenuPath + "Menu", priority = 0)]
         private static void DisplayWindow()
         {
-            _ezSaverConfig = EzSaverConfig.Load;
+            RefreshConfig();
 
-            if (_ezSaverConfig == null) return;
+            if (!_ezSaverConfig) return;
 
             var window = GetWindow<EzSaverEditor>("EzSaver Menu");
 
             // Limit size of the window to non re-sizable.
             window.maxSize = window.minSize = new Vector2(Width, Height);
+        }
+
+        [MenuItem(ContextMenuPath + "Menu", true)]
+        private static bool ValidateDisplayWindow()
+        {
+            return EzSaverConfig.Load;
         }
 
         [MenuItem(CreateEzSaverConfigContextMenuPath, false, priority = 1)]
@@ -90,7 +99,7 @@ namespace Racer.EzSaver.Editor
             };
         }
 
-        [MenuItem(CreateEzSaverConfigContextMenuPath, true, priority = 1)]
+        [MenuItem(CreateEzSaverConfigContextMenuPath, true)]
         private static bool ValidateCreateEzSaverConfig()
         {
             try
@@ -105,7 +114,7 @@ namespace Racer.EzSaver.Editor
             return !_isConfigAssetCreated;
         }
 
-        [MenuItem(ImportElementsContextMenuPath, false, priority = 1)]
+        [MenuItem(ImportElementsContextMenuPath, false, priority = 2)]
         private static void ImportElements()
         {
             var packagePath = $"Packages/{PkgId}/Elements/{AssetPkgId}";
@@ -116,26 +125,51 @@ namespace Racer.EzSaver.Editor
                 EditorUtility.DisplayDialog("Missing Package File", $"{AssetPkgId} not found in the package.", "OK");
         }
 
-        [MenuItem(ForceImportElementsContextMenuPath, false, priority = 1)]
-        private static void ForceImportElements()
-        {
-            ImportElements();
-        }
-
-        [MenuItem(ImportElementsContextMenuPath, true, priority = 1)]
+        [MenuItem(ImportElementsContextMenuPath, true)]
         private static bool ValidateImportElements()
         {
             _isElementsImported = AssetDatabase.IsValidFolder($"{RootPath}/Elements");
             return !_isElementsImported;
         }
 
-        [MenuItem(ForceImportElementsContextMenuPath, true, priority = 1)]
+        [MenuItem(ForceImportElementsContextMenuPath, false, priority = 3)]
+        private static void ForceImportElements()
+        {
+            ImportElements();
+        }
+
+        [MenuItem(ForceImportElementsContextMenuPath, true)]
         private static bool ValidateForceImportElements()
         {
             return _isElementsImported;
         }
 
-        [MenuItem(ContextMenuPath + "Remove Package(recommended)", priority = 2)]
+        [MenuItem(AddPrefabToScenePath, false, 4)]
+        private static void AddPrefabToScene()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabsPath);
+
+            if (prefab)
+            {
+                var go = Instantiate(prefab);
+                go.name = prefab.name;
+                Undo.RegisterCreatedObjectUndo(GameObject.Find(go.name), "Add EzSaverManager prefab instance to Scene");
+            }
+            else
+                EditorUtility.DisplayDialog("Missing Prefab",
+                    "EzSaverManager prefab not found in the package.\n\nImport this package's elements and try again",
+                    "OK");
+        }
+
+        [MenuItem(AddPrefabToScenePath, true)]
+        private static bool ValidateAddPrefabToScene()
+        {
+            // Validate that the prefab exists and is not already in the scene
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabsPath);
+            return prefab && !GameObject.Find(prefab.name);
+        }
+
+        [MenuItem(ContextMenuPath + "Remove Package(recommended)", priority = 10)]
         private static void RemovePackage()
         {
             _removeRequest = Client.Remove(PkgId);

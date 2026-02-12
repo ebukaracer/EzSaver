@@ -70,7 +70,7 @@ namespace Racer.EzSaver.Samples
 
         public void ClearData()
         {
-            // ..reused here too
+            // ...reused here too
             EzSaverCore.ClearAll();
 
             _currentScore = CurrentHighscore = 0;
@@ -91,13 +91,13 @@ namespace Racer.EzSaver.Samples
 
         protected virtual void WriteChanges()
         {
-            // ..reused here too
+            // ...reused here too
             EzSaverCore.Write("Highscore", CurrentHighscore);
         }
 
         /// <summary>
         /// Writing and Saving changes here is not recommended.
-        /// Instead you can Write() on the go, and find a more suitable trigger point to Save() all at once.
+        /// Instead, you can Write() on the go, and find a more suitable trigger point to Save() all at once.
         /// </summary>
         protected virtual void OnDestroy()
         {

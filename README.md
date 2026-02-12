@@ -27,11 +27,12 @@ This package depends on **Newtonsoft Json (v3.2.1)**. If it's not already availa
 -  Click **Add**
 
 ## Setup
-After installation, use the menu options:
+After installation, use the menu options in the following order:
 - `Racer > EzSaver > Create EzSaverConfig?` to create and initialize the required configuration file, necessary for the package to work.
 - `Racer > EzSaver > Import Elements` to import the prebuilt elements(prefabs) of this package, which will speed up your workflow(optional).
-## Quick Usage
-After importing the package's **Elements**, locate the **EzSaverManager** prefab and add it to the scene where you want to enable save functionality.
+- `Racer > EzSaver > Add EzSaverManager Prefab to Scene` to add the manager gameobject required for saving and loading.
+## Usage
+In any of your scripts, you can perform the following operations:
 #### Initialize a save-file:
 ``` csharp
 using Racer.EzSaver.Utilities;  
@@ -100,48 +101,48 @@ _ezSaverCore.DeleteFile();
 ```
 
 ### Other Features
-- **Automatic Save on Quit**: Enable `autoSaveOnQuit` in the `EzSaverManager` to automatically save changes when the application quits.
+- **Automatic Save on Quit**: Toggle `autoSaveOnQuit` in the `EzSaverManager` to automatically save changes when the application quits.
 - **Save on Modification**: Toggle `saveOnModification` to commit changes immediately after a write operation.
 - **Security**: Use the `useSecurity` parameter to enable encryption/decryption for save files.
 ## Samples and Best Practices
-- Always generate new credentials for each project and back up securely.
+- Always generate new credentials for each project and back them up securely.
 - In the case of any updates to newer versions, use the menu option: `Racer > EzSaver > Import Elements(Force)` 
 - Optionally import this package's demo from the package manager's `Samples` tab.
 - To remove this package completely(leaving no trace), navigate to: `Racer > EzSaver > Remove package`
 
 ## FAQs
-**Q1. What platforms are supported?**
+**What platforms are supported?**
 > Tested on Android, Windows, and WebGL (see Q2). Probably supported on macOS and iOS.
 
-**Q2. Will it really work for WebGL builds?**
+**Will it really work for WebGL builds?**
 > Partially. Since WebGL doesn't allow file system access, save-files cannot be stored traditionally. As a workaround, you can initialize save data as a string literal and use **PlayerPrefs** to store the final save state.
 
-**Q3. Is save data encrypted? How can I manage the keys?**
+**Is save data encrypted? How can I manage the keys?**
 > Yes, encryption is supported and optional during initialization. The current encryption keys can be found in the Config Asset under:  
 > `Racer > EzSaver > Menu > Config Asset`.
 
-**Q4. What could cause data loss?**
+**What could cause data loss?**
 > Imagine this scenario: You deploy a project `xyz` using credentials `abc` (save-keys). Later, if you generate new credentials `cba` for the same project `xyz`, all previous save data tied to `abc` will be overwritten and lost. To prevent this, always back up your credentials and restore them when needed using the **Config Asset**. 
 
-**Q5. Does that mean I should never change the current credentials?**
-> Not necessarily! You can generate new credentials anytime during development. If potential data loss isn't a concern, feel free to proceed. Even If credential regeneration causes save data to be overwritten, the system automatically creates a backup of the original save file. This backup uses a naming pattern based on the original filename: 
-> >For example, if your original save file is `data.json`, the backup will be saved as `data-backup0.json`. 
+**Does that mean I should never change the current credentials?**
+> Not necessarily! You can generate new credentials anytime during development. If potential data loss isn't a concern, feel free to proceed. Even if credential regeneration causes save data to be overwritten, the system automatically creates a backup of the original save file. This backup uses a naming pattern based on the original filename: 
+> For example, if your original save file is `data.json`, the backup will be saved as `data-backup0.json`. 
 > This gives you a way to recover the lost data if needed.
 
-**Q6. Can I modify the contents of the save file?**
+**Can I modify the contents of the save file?**
 > Absolutely — as long as encryption is disabled. Modifying an encrypted save file will cause decryption to fail, resulting in data loss. It’s recommended to only modify the plain JSON string when encryption is turned off.
 
-**Q7. Can different save files have different credentials within the same project?**
+**Can different save files have different credentials within the same project?**
 > Technically yes, but it’s risky and may lead to data corruption or loss. A safer approach is to generate and back up a unique set of credentials per project — for example:  
 > `Project A` → `abc`,  
 > `Project B` → `xyz`.  
 > However, multiple projects can still share the same credentials if necessary.
 
-**Q8. What if I forget to save after making modifications?**
-> If automatic saving is enabled (which it is by default), **EzSaverManager.cs** will handle this for you. Note that automatic saving and on-the-go saving only work if you initialized from a file source. If initialized from a string literal, you'll need to manually define save trigger points.
+**What if I forget to save after making modifications?**
+> If automatic saving is enabled (which it is by default), **EzSaverManager.cs** will handle this for you. Just so you know, automatic saving and on-the-go saving only work if you initialized from a file source. If initialized from a string literal, you'll need to define save trigger points manually.
 
 ## How to Restore Lost/Overwritten Save Data
-First ensure `Retain Backup File` was toggled-on in the **Config Asset**, then:
+First, ensure `Retain Backup File` was toggled on in the **Config Asset**, then:
 - Locate the backup file:  
     - Find the backup file (e.g., `data-backup0.json`) in the default save location.
 - Recover the original save:
