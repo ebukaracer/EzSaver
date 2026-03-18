@@ -43,17 +43,17 @@ namespace Racer.EzSaver.Core
 
         internal static T DeserializeKey<T>(string key, JObject data)
         {
-            return data[key].ToObject<T>(_serializer);
+            return data == null ? default : data[key].ToObject<T>(_serializer);
         }
 
         internal static JToken SerializeKey<T>(T data)
         {
-            return JToken.FromObject(data, _serializer);
+            return data == null ? JValue.CreateNull() : JToken.FromObject(data, _serializer);
         }
 
         internal static string Serialize<T>(T value)
         {
-            return JsonConvert.SerializeObject(value, Settings);
+            return value == null ? null : JsonConvert.SerializeObject(value, Settings);
         }
     }
 }

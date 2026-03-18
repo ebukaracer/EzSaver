@@ -93,11 +93,11 @@ namespace Racer.EzSaver.Core
         /// <param name="key">The key associated with the value.</param>
         /// <param name="value">The value to write.</param>
         /// <returns>The current instance of <see cref="EzSaverCore"/>.</returns>
-        /// <exception cref="EzSaverException">Thrown when the key or value is null, or when serialization fails.</exception>
+        /// <exception cref="EzSaverException">Thrown when the key is null, or when serialization fails.</exception>
         public EzSaverCore Write<T>(string key, T value)
         {
-            if (value is null || key is null)
-                throw new EzSaverException($"'{typeof(T).Name}' or '{key}' cannot be null.");
+            if (key is null)
+                throw new EzSaverException("Key cannot be null.");
 
             try
             {
