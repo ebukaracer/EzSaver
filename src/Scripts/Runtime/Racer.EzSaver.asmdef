@@ -1,0 +1,14 @@
+{
+  "name": "Racer.EzSaver",
+  "rootNamespace": "Racer",
+  "references": ["GUID:10ba205185dd4f048f5ab1a8b280af01"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

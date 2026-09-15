@@ -1,0 +1,29 @@
+name: Deploy Documentation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'README.md'
+      - 'src/**'
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  docs:
+    uses: ebukaracer/gh-workflows/.github/workflows/build-docfx.yml@main
+    with:
+      dotnet_version: '9.x'
+      docfx_config: 'docfx/docfx.json'
+      site_path: 'docfx/_site'
